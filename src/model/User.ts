@@ -4,31 +4,31 @@ import { Base } from "./Base";
 class User extends Base {
   // thông tin cá nhân
   getProfile = async () => {
-    const res = await this.apiGet("/users/me/v2");
+    const res = await this.apiGet("-auth/profile");
     return res.data;
   };
 
   //Cập nhật thông tin cá nhân
   updateProfile = async (body: any) => {
-    const res = await this.apiPut(`/users`, body);
+    const res = await this.apiPut(`-auth/profile`, body);
     return res.data;
   };
 
   // Cập nhật avatar
   updateAvatar = async (body: any) => {
-    const res = await this.apiUploadFile(`/users/upload-avatar`, body);
+    const res = await this.apiUploadFile(`-auth/users/upload-avatar`, body);
     return res.data;
   };
 
   // Thông tin người dùng chi tiết
   getUserInfo = async (id: number) => {
-    const res = await this.apiGet(`/users/${id}`);
+    const res = await this.apiGet(`-auth/profile`);
     return res.data;
   };
 
   // Thay đổi mật khẩu
   changePassword = async (body: any) => {
-    const res = await this.apiPost(`/users/change-password`, body);
+    const res = await this.apiPut(`-auth/change-password`, body);
     return res.data;
   };
 
@@ -77,16 +77,16 @@ class User extends Base {
   };
 
   // Danh sách tài khoản
-  getAllAccount = async () => {
-    const res = await this.apiGet(`/authorization/list-not-approved`);
+  getAllAccount = async (param?: any) => {
+    const res = await this.apiGet(`/search`, param);
     return res.data;
   };
 
   // Phê duyệt tài khoản
   approveAccount = async (id: number) => {
-    const res = await this.apiPost(`/authorization/${id}`, { id: id });
+    const res = await this.apiPut(`-auth/authorization/${id}`, { id: id });
     return res.data;
   };
 }
 
-export default new User("user-service");
+export default new User("user");

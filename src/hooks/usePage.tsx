@@ -10,17 +10,17 @@ import { omit } from "lodash";
 
 /** Xử lý dữ liệu trả về của API phân trang về cùng một dạng content / tổng số content */
 export const formatPaginationData = (res: any) => {
-  if (res?.data?.content) {
+  if (res?.content) {
     return {
-      content: res.data.content,
-      total: res.data.totalElements,
+      content: res.content,
+      total: res.meta.itemCount,
       ...omit(res, ["data"]),
     };
   }
   if (res?.content) {
     return {
       content: res.content,
-      total: res.totalElements,
+      total: res.itemCount,
     };
   }
   if (res?.length > 0) {
@@ -32,7 +32,7 @@ export const formatPaginationData = (res: any) => {
   if (res?.data) {
     return {
       content: res.data,
-      total: res.totalElements,
+      total: res.itemCount,
     };
   }
 
@@ -92,7 +92,7 @@ export const usePage = (
         signal,
       );
 
-      return formatPaginationData(res.data);
+      return formatPaginationData(res);
     },
     initialData: {
       content: [],

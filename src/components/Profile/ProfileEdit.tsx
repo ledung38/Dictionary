@@ -93,16 +93,19 @@ const ProfileEdit = () => {
         <Form
           form={form}
           onFinish={async (value) => {
-            const newValue = {
-              ...value,
-              birthDay: dayjs(value.birthDay).format("YYYY-MM-DD"),
-            };
-            const res = await User.updateProfile(newValue);
-            if (res.code === 200) {
+            try {
+              const newValue = {
+                ...value,
+                birthDay: dayjs(value.birthDay).format("YYYY-MM-DD"),
+              };
+              await User.updateProfile(newValue);
               message.success("Cập nhật thành công");
               const response = await User.getProfile();
-              dispatch(login(response.data));
+              dispatch(login(response));
               router.push("/profile");
+            } catch (error: any) {
+              console.log("error", error);
+              message.error(error?.response.data.data?.message);
             }
           }}
           layout="vertical"

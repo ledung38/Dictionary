@@ -4,7 +4,7 @@ import { Base } from "./Base";
 class Auth extends Base {
   // Đăng nhập
   login = async (body?: any) => {
-    const res = await this.apiPost("/auth/login", body);
+    const res = await this.apiPost("/login", body);
     return res.data;
   };
   // Đăng ký
@@ -18,4 +18,4 @@ class Auth extends Base {
   };
 }
 
-export default new Auth("user-service");
+export default new Auth("user");

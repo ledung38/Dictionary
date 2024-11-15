@@ -28,8 +28,8 @@ const Login: React.FC = () => {
       localStorage.setItem("access_token", res.access_token);
       localStorage.setItem("refresh_token", res.refresh_token);
       const response: any = await User.getProfile();
-      dispatch(login(response.data));
-      localStorage.setItem("user", response.data);
+      dispatch(login(response));
+      localStorage.setItem("user", response);
       message.success("Đăng nhập thành công");
       router.push("/");
     },
@@ -48,7 +48,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="w-full p-4 sm:p-12.5 xl:p-17.5">
-      <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2 text-purple-600">
+      <h2 className="mb-9 text-2xl font-bold text-black text-purple-600 dark:text-white sm:text-title-xl2">
         Đăng nhập
       </h2>
 
@@ -109,7 +109,10 @@ const Login: React.FC = () => {
       <div className="mt-6 text-center">
         <p>
           Bạn chưa có tài khoản?{" "}
-          <Link href="/register" className="text-purple-600 hover:text-purple-700">
+          <Link
+            href="/register"
+            className="text-purple-600 hover:text-purple-700"
+          >
             Đăng ký
           </Link>
         </p>

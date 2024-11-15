@@ -194,6 +194,15 @@ const DropdownUser = ({ admin }: { admin: User }) => {
               placeholder="Nhập mật khẩu mới"
             />
           </Form.Item>
+          <Form.Item label="Nhập lại Mật khẩu mới" name="confirmPassword">
+            <Input.Password
+              type="password"
+              iconRender={(visible) =>
+                visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+              }
+              placeholder="Nhập laị mật khẩu mới"
+            />
+          </Form.Item>
           <div className="flex gap-3">
             <Button onClick={() => setIsShowModalChangePass(false)}>Huỷ</Button>
             <Button type="primary" htmlType="submit">

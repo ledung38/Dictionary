@@ -12,7 +12,9 @@ const RequestPage: React.FC = () => {
   const { page, pageSize, content, isFetching, pagination, refetch } = usePage(
     ["getAllAccount"],
     User.getAllAccount,
-    {},
+    {
+      status: "PENDING",
+    },
   );
 
   // Chấp nhận
@@ -68,8 +70,8 @@ const RequestPage: React.FC = () => {
 
     {
       title: "Phê duyệt",
-      dataIndex: "userId",
-      key: "userId",
+      dataIndex: "id",
+      key: "id",
       width: "20%",
       render: (value: number) => (
         <>
