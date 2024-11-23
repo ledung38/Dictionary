@@ -8,6 +8,11 @@ class UploadModel extends Base {
     return res.data;
   };
 
+  image = async (body: FormData) => {
+    const res = await this.apiUploadFile("/image", body);
+    return res.data;
+  };
+
   // check AI
   checkAI = async (body: any) => {
     const res = await this.apiPostWithoutPrefix(
@@ -29,4 +34,4 @@ class UploadModel extends Base {
   // detact
 }
 
-export default new UploadModel("data-collection-service");
+export default new UploadModel("upload-auth");

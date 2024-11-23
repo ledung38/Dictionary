@@ -68,14 +68,12 @@ const Profile = () => {
                 value={user?.avatarLocation}
                 listType="picture-circle"
                 onChange={async (value) => {
-                  const res = await User.updateAvatar({
+                  const res = await User.updateProfile({
                     avatarLocation: value,
                   });
-                  if (res.code === 200) {
-                    const response = await User.getProfile();
-                    dispatch(login(response.data));
-                    message.success("Cập nhật avatar thành công");
-                  }
+                  const response = await User.getProfile();
+                  dispatch(login(response));
+                  message.success("Cập nhật avatar thành công");
                 }}
               />
             </div>

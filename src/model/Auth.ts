@@ -9,12 +9,12 @@ class Auth extends Base {
   };
   // Đăng ký
   register = async (body?: any) => {
-    return await this.apiPost("/register/generate-otp", body);
+    return await this.apiPost("/register", body);
   };
 
   // validate otp
   validateOtp = async (body?: any) => {
-    return await this.apiPost("/register/validate-otp", body);
+    return await this.apiPost("/register/verify-otp", body);
   };
 }
 

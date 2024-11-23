@@ -168,25 +168,26 @@ class Learning extends Base {
 
   //* CLass
   getListClass = async (params?: any) => {
-    const res = await this.apiGet(`/classrooms/all`, params);
+    const res = await this.apiGetWithoutPrefix(`/classroom/all`, params);
     return res.data;
   };
 
   // Thêm mới lớp
   createClass = async (body?: any) => {
-    const res = await this.apiPost(`/classrooms`, body);
+    const res = await this.apiPostWithoutPrefix(`/classroom-auth`, body);
     return res.data;
   };
 
   // Chỉnh sửa mới lớp
   editClass = async (body?: any) => {
-    const res = await this.apiPut(`/classrooms`, body);
+    console.log("body", body);
+    const res = await this.apiPutWithoutPrefix(`/classroom-auth/:id`, body);
     return res.data;
   };
 
   // Xoá  lớp
   deleteClass = async (id?: number) => {
-    const res = await this.apiDelete(`/classrooms/${id}`);
+    const res = await this.apiDeleteWithoutPrefix(`/classroom-auth/${id}`);
     return res.data;
   };
 
@@ -237,4 +238,4 @@ class Learning extends Base {
   };
 }
 
-export default new Learning("learning-service");
+export default new Learning("");

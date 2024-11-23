@@ -17,6 +17,7 @@ import {
   Form,
   Image,
   Input,
+  Select,
   Upload,
   UploadProps,
   message,
@@ -27,13 +28,21 @@ import { CustomTable } from "../check-list/ExamList";
 import { debounce } from "lodash";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { ClassLevel } from "@/utils/enum";
+import User from "@/model/User";
 
 interface Class {
-  classRoomName?: string;
-  content: string;
-  teacherName: string;
-  imageLocation: string;
+  id: number;
+  name: string;
+  teacher: {
+    id: number;
+    name: string;
+  };
+  thumbnailPath: string;
   videoLocation?: string;
+  classLevel: ClassLevel;
+  teacherId: number;
+  teacherName: string;
 }
 
 const ClassList: React.FC = () => {
@@ -44,6 +53,8 @@ const ClassList: React.FC = () => {
   const [filteredLstClass, setFilteredLstClass] = useState<Class[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchText, setSearchText] = useState("");
+  const [userList, setUserList] = useState<any[]>([]);
+
   const pageSize = 10;
   const [modalCreate, setModalCreate] = useState<{
     open: boolean;
@@ -66,34 +77,40 @@ const ClassList: React.FC = () => {
     queryKey: ["getListClass"],
     queryFn: async () => {
       const res = await Learning.getListClass();
-      setLstClass(res.data);
-      setFilteredLstClass(res.data);
-      return res.data as Class[];
+      setLstClass(res.content);
+      setFilteredLstClass(res.content);
+      return res as Class[];
     },
   });
 
   // Thêm mới / chỉnh sửa lớp
   const mutationCreateUpdate = useMutation({
-    mutationFn: modalCreate.typeModal === "create" ? Learning.createClass : Learning.editClass,
+    mutationFn:
+      modalCreate.typeModal === "create"
+        ? Learning.createClass
+        : Learning.editClass,
     onSuccess: (res, variables) => {
+      refetch();
+
       const updatedClass = {
         ...variables,
-        classRoomName: res.classRoomName,
+        id: res.id,
+        name: res.name,
       };
 
       setLstClass((prevLst) =>
         modalCreate.typeModal === "create"
           ? [...prevLst, updatedClass]
-          : prevLst.map((cls) => (cls.classRoomName === res.classRoomName ? updatedClass : cls))
+          : prevLst.map((cls) => (cls.name === res.name ? updatedClass : cls)),
       );
       setFilteredLstClass((prevLst) =>
         modalCreate.typeModal === "create"
           ? [...prevLst, updatedClass]
-          : prevLst.map((cls) => (cls.classRoomName === res.classRoomName ? updatedClass : cls))
+          : prevLst.map((cls) => (cls.name === res.name ? updatedClass : cls)),
       );
 
       message.success(
-        `${modalCreate.typeModal === "create" ? "Thêm mới lớp học thành công" : "Cập nhật lớp học thành công"}`
+        `${modalCreate.typeModal === "create" ? "Thêm mới lớp học thành công" : "Cập nhật lớp học thành công"}`,
       );
 
       setModalCreate({ ...modalCreate, open: false, file: "" });
@@ -133,45 +150,45 @@ const ClassList: React.FC = () => {
     },
     {
       title: "Tên lớp học",
-      dataIndex: "content",
-      key: "content",
+      dataIndex: "name",
+      key: "name",
       render: (value: string) => <div className="text-lg">{value}</div>,
       width: 200,
     },
     {
       title: "Tên giáo viên",
-      dataIndex: "teacherName",
-      key: "teacherName",
-      render: (value: string) => <div className="text-lg">{value}</div>,
+      dataIndex: "teacher",
+      key: "teacher",
+      render: (value: any) => <div className="text-lg">{value?.name}</div>,
       width: 300,
     },
     {
       title: "Tên lớp",
-      dataIndex: "classRoomName",
-      key: "classRoomName",
+      dataIndex: "classLevel",
+      key: "classLevel",
       render: (value: string) => <div className="text-lg">{value}</div>,
       width: 200,
     },
     user?.role === "ADMIN"
       ? {
           title: "Hành động",
-          key: "classRoomName",
-          dataIndex: "classRoomName",
+          key: "id",
+          dataIndex: "id",
           render: (value: any, record: Class) => (
             <div className="flex space-x-2">
               <Button
                 icon={<EditOutlined />}
                 onClick={() => {
                   form.setFieldsValue({
-                    content: record.content,
-                    teacherName: record.teacherName,
-                    file: record.imageLocation,
-                    classRoomName: record.classRoomName,
+                    name: record.name,
+                    teacherName: record.teacher.name,
+                    file: record.thumbnailPath,
+                    classLevel: record.classLevel,
                   });
                   setModalCreate({
                     ...modalCreate,
                     open: true,
-                    file: record.imageLocation,
+                    file: record.thumbnailPath,
                     typeModal: "edit",
                   });
                 }}
@@ -230,6 +247,14 @@ const ClassList: React.FC = () => {
 
   const isLoading = isFetching || mutationCreateUpdate.isPending;
 
+  const handleOnchangeTeacher = async (e: any) => {
+    const response = await User.getAllAccount({
+      roleCode: "TEACHER",
+      name: e,
+    });
+    setUserList(response.content.map((item: any) => item));
+  };
+
   return (
     <div className="w-full p-4">
       <h1 className="mb-4 text-2xl font-bold">Danh sách lớp học</h1>
@@ -257,7 +282,7 @@ const ClassList: React.FC = () => {
         />
 
         <Button
-          hidden={!(user?.role === "ADMIN")}
+          hidden={!(user?.role === "ADMIN" || user?.role === "TEACHER")}
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => {
@@ -321,24 +346,58 @@ const ClassList: React.FC = () => {
             layout="vertical"
             onFinish={(value) => {
               mutationCreateUpdate.mutate({
-                content: value.content,
-                teacherName: value.teacherName,
-                classRoomName: value.classRoomName,
-                imageLocation: value.file,
+                classLevel: value.classLevel,
+                teacherId: form.getFieldValue("teacherId"),
+                name: value.name,
+                thumbnailPath: value.file,
+                id: value.id,
               });
             }}
           >
             <Form.Item
-              name="classRoomName"
+              name="classLevel"
               label="Tên lớp"
               className="mb-2"
               required
-              rules={[{ required: true, message: "Tên lớp không được bỏ trống" }]}
+              rules={[
+                { required: true, message: "Tên lớp không được bỏ trống" },
+              ]}
             >
-              <Input placeholder="Nhập tên lớp" />
+              <Select
+                size="small"
+                placeholder="Chọn lớp"
+                style={{
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  borderRadius: "8px",
+                }}
+                options={[
+                  {
+                    label: "Lớp 1",
+                    value: ClassLevel.CLASS_LEVEL_1,
+                  },
+                  {
+                    label: "Lớp 2",
+                    value: ClassLevel.CLASS_LEVEL_2,
+                  },
+                  {
+                    label: "Lớp 3",
+                    value: ClassLevel.CLASS_LEVEL_3,
+                  },
+                  {
+                    label: "Lớp 4",
+                    value: ClassLevel.CLASS_LEVEL_4,
+                  },
+                  {
+                    label: "Lớp 5",
+                    value: ClassLevel.CLASS_LEVEL_5,
+                  },
+                ]}
+              />
             </Form.Item>
             <Form.Item
-              name="content"
+              name="name"
               label="Tên lớp học"
               className="mb-2"
               required
@@ -346,15 +405,43 @@ const ClassList: React.FC = () => {
             >
               <Input placeholder="Nhập tên lớp học muốn thêm" />
             </Form.Item>
-            <Form.Item
-              name="teacherName"
-              label="Tên giáo viên"
-              className="mb-2"
-              required
-              rules={[validateRequireInput("Tên giáo viên không được bỏ trống")]}
-            >
-              <Input placeholder="Nhập tên giáo viên" />
-            </Form.Item>
+            {user?.role === "ADMIN" && (
+              <Form.Item
+                label="Tên giáo viên"
+                className="mb-2"
+                required
+                rules={[
+                  validateRequireInput("Tên giáo viên không được bỏ trống"),
+                ]}
+              >
+                <Input
+                  placeholder="Nhập tên giáo viên"
+                  value={
+                    form.getFieldValue("teacherId") &&
+                    `${form.getFieldValue("teacherName")} - ${form.getFieldValue("teacherId")}`
+                  }
+                  onChange={(e) => handleOnchangeTeacher(e.target.value)}
+                />
+                {userList.length > 0 && (
+                  <ul className="border-gray-300 absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border bg-white shadow-lg">
+                    {userList.map((item, index) => (
+                      <li
+                        key={index}
+                        className="cursor-pointer px-4 py-2 hover:bg-blue-100"
+                        onClick={() => {
+                          console.log(item);
+                          form.setFieldValue("teacherId", item.id);
+                          form.setFieldValue("teacherName", item.name);
+                          setUserList([]);
+                        }}
+                      >
+                        {item.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Form.Item>
+            )}
             <Form.Item name="file" label="Ảnh">
               <Upload {...props} showUploadList={false}>
                 <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>

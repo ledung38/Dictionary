@@ -14,6 +14,7 @@ const RequestPage: React.FC = () => {
     User.getAllAccount,
     {
       status: "PENDING",
+      roleCode: "TEACHER",
     },
   );
 

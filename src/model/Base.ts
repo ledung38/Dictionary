@@ -6,9 +6,9 @@ export class Base {
   private readonly apiRoot: string | undefined;
   private readonly apiPrefix: string | undefined;
 
-  constructor(apiPrefix: string | null = null) {
-    this.apiRoot = API_ROOT;
-    this.apiPrefix = `${API_ROOT}/${apiPrefix}`;
+  constructor(apiPrefix: string | null) {
+    this.apiRoot = API_ROOT + "/api";
+    this.apiPrefix = `${API_ROOT}/api/${apiPrefix}`;
   }
 
   normalizeQuery = (query: { [x: string]: any }) => {

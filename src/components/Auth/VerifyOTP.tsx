@@ -29,8 +29,10 @@ const VerifyOtp = () => {
       message.success("Đăng ký tài khoản thành công !");
       router.push("/login");
     },
-    onError: (error: Error) => {
-      message.error("Mã otp không đúng. Vui lòng thử lại");
+
+    onError: (error: any) => {
+      console.log(error);
+      message.error(error?.data?.message);
     },
   });
 
@@ -49,7 +51,7 @@ const VerifyOtp = () => {
     const { otp } = values;
     veryOtpMutation.mutate({
       email: register.email,
-      otpNum: parseInt(otp.join("")).toString(),
+      otpNum: parseInt(otp.join("")),
     });
   };
 

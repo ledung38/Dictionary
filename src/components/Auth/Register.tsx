@@ -35,8 +35,8 @@ const Register: React.FC = () => {
         router.push(`/verify-otp`);
       }
     },
-    onError: (error: Error) => {
-      message.error("Email đã được sử dụng");
+    onError: (error: any) => {
+      message.error(error.data?.message);
     },
   });
 

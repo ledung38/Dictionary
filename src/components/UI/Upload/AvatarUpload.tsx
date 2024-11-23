@@ -1,4 +1,5 @@
 import UploadModel from "@/model/UploadModel";
+import { GenerateUtils } from "@/utils/generate";
 import { Avatar, Upload, message } from "antd";
 import { isFunction } from "lodash";
 import {
@@ -80,7 +81,7 @@ export const AvatarUpload: FC<ImageUploadProps> = ({
       if (validateImg(file)) {
         const formData = new FormData();
         formData.append("file", file);
-        UploadModel.uploadFile(formData).then((res) => {
+        UploadModel.image(formData).then((res) => {
           if (isFunction(onChange)) onChange(res);
           else setImageUrl(res);
         });
@@ -92,6 +93,7 @@ export const AvatarUpload: FC<ImageUploadProps> = ({
   /** Xử lý đặt lại giá trị của danh sách ảnh khi giá trị đầu vào thay đổi */
   useEffect(() => setImageUrl(value || null), [value]);
 
+  console.log("imageUrl", imageUrl);
   return (
     <>
       <div className=" flex flex-wrap items-center gap-4">
@@ -105,7 +107,11 @@ export const AvatarUpload: FC<ImageUploadProps> = ({
           {children || (
             <>
               {imageUrl ? (
-                <Avatar className="object-cover" src={imageUrl} size={160} />
+                <Avatar
+                  className="object-cover"
+                  src={GenerateUtils.genUrlImage(imageUrl)}
+                  size={160}
+                />
               ) : (
                 <>{uploadButton}</>
               )}

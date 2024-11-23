@@ -12,6 +12,7 @@ import { useDispatch } from "react-redux";
 import { logout } from "@/store/slices/adminSlice";
 import { useRouter } from "next/navigation";
 import User from "@/model/User";
+import { GenerateUtils } from "@/utils/generate";
 
 const DropdownUser = ({ admin }: { admin: User }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -106,7 +107,7 @@ const DropdownUser = ({ admin }: { admin: User }) => {
           <Avatar
             size={48}
             icon={<UserOutlined />}
-            src={admin?.avatarLocation}
+            src={GenerateUtils.genUrlImage(admin?.avatarLocation)}
           />
         </span>
       </Link>
