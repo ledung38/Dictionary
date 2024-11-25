@@ -93,7 +93,6 @@ export const AvatarUpload: FC<ImageUploadProps> = ({
   /** Xử lý đặt lại giá trị của danh sách ảnh khi giá trị đầu vào thay đổi */
   useEffect(() => setImageUrl(value || null), [value]);
 
-  console.log("imageUrl", imageUrl);
   return (
     <>
       <div className=" flex flex-wrap items-center gap-4">

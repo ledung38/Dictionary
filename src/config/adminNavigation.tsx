@@ -19,6 +19,13 @@ export const AdminSystem = (admin: any) => {
               icon: <DotIcon color="white" size={20} />,
             },
             {
+              key: "/learning-management/student",
+              label: "Học sinh",
+              path: "/learning-management/student",
+              hidden: false,
+              icon: <DotIcon color="white" size={20} />,
+            },
+            {
               key: "/learning-management/topics",
               label: "Chủ đề ",
               path: "/learning-management/topics",

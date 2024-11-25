@@ -13,11 +13,11 @@ import {
 } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  Select,
   Button,
   Form,
   Image,
   Input,
-  Select,
   Upload,
   UploadProps,
   message,
@@ -44,6 +44,7 @@ interface Class {
   classLevel: ClassLevel;
   teacherId: number;
   teacherName: string;
+  classCode: string;
 }
 
 const ClassList: React.FC = () => {
@@ -152,11 +153,25 @@ const ClassList: React.FC = () => {
       width: 50,
     },
     {
+      title: "Tên khối",
+      dataIndex: "classLevel",
+      key: "classLevel",
+      render: (value: string) => <div className="text-lg">{value}</div>,
+      width: 100,
+    },
+    {
       title: "Tên lớp học",
       dataIndex: "name",
       key: "name",
       render: (value: string) => <div className="text-lg">{value}</div>,
       width: 200,
+    },
+    {
+      title: "Mã lớp",
+      dataIndex: "classCode",
+      key: "classCode",
+      render: (value: string) => <div className="text-lg">{value}</div>,
+      width: 100,
     },
     {
       title: "Tên giáo viên",
@@ -165,49 +180,41 @@ const ClassList: React.FC = () => {
       render: (value: any) => <div className="text-lg">{value?.name}</div>,
       width: 300,
     },
-    {
-      title: "Tên lớp",
-      dataIndex: "classLevel",
-      key: "classLevel",
-      render: (value: string) => <div className="text-lg">{value}</div>,
-      width: 200,
+    (user?.role === "ADMIN" || user?.role === "TEACHER") && {
+      title: "Hành động",
+      key: "actions",
+      dataIndex: "classRoomName",
+      render: (value: any, record: Class) => (
+        <div className="flex space-x-2">
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => {
+              form.setFieldsValue({
+                name: record.name,
+                teacherName: record.teacher.name,
+                file: record.thumbnailPath,
+                classLevel: record.classLevel,
+                teacherId: record.teacherId,
+                id: record.id,
+                classCode: record.classCode,
+              });
+              setModalCreate({
+                ...modalCreate,
+                open: true,
+                file: record.thumbnailPath,
+                typeModal: "edit",
+              });
+            }}
+          />
+          <Button
+            icon={<DeleteOutlined />}
+            danger
+            onClick={() => mutationDel.mutate(value)}
+          />
+        </div>
+      ),
     },
-    user?.role === "ADMIN"
-      ? {
-          title: "Hành động",
-          key: "id",
-          dataIndex: "id",
-          render: (value: any, record: Class) => (
-            <div className="flex space-x-2">
-              <Button
-                icon={<EditOutlined />}
-                onClick={() => {
-                  form.setFieldsValue({
-                    name: record.name,
-                    teacherName: record.teacher.name,
-                    file: record.thumbnailPath,
-                    classLevel: record.classLevel,
-                    teacherId: record.teacherId,
-                    id: record.id,
-                  });
-                  setModalCreate({
-                    ...modalCreate,
-                    open: true,
-                    file: record.thumbnailPath,
-                    typeModal: "edit",
-                  });
-                }}
-              />
-              <Button
-                icon={<DeleteOutlined />}
-                danger
-                onClick={() => mutationDel.mutate(value)}
-              />
-            </div>
-          ),
-        }
-      : null,
-  ]?.filter((item) => item);
+  ].filter(Boolean);
 
   const props: UploadProps = {
     name: "file",
@@ -357,51 +364,55 @@ const ClassList: React.FC = () => {
                 name: value.name,
                 thumbnailPath: value.file,
                 id: form.getFieldValue("id"),
+                classCode: value.classCode,
               });
             }}
           >
-            <Form.Item
-              name="classLevel"
-              label="Tên lớp"
-              className="mb-2"
-              required
-              rules={[
-                { required: true, message: "Tên lớp không được bỏ trống" },
-              ]}
-            >
-              <Select
-                size="small"
-                placeholder="Chọn lớp"
-                style={{
-                  height: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  borderRadius: "8px",
-                }}
-                options={[
-                  {
-                    label: "Lớp 1",
-                    value: ClassLevel.CLASS_LEVEL_1,
-                  },
-                  {
-                    label: "Lớp 2",
-                    value: ClassLevel.CLASS_LEVEL_2,
-                  },
-                  {
-                    label: "Lớp 3",
-                    value: ClassLevel.CLASS_LEVEL_3,
-                  },
-                  {
-                    label: "Lớp 4",
-                    value: ClassLevel.CLASS_LEVEL_4,
-                  },
-                  {
-                    label: "Lớp 5",
-                    value: ClassLevel.CLASS_LEVEL_5,
-                  },
+            {(user?.role === "ADMIN" || user?.role === "TEACHER") && (
+              <Form.Item
+                name="classLevel"
+                label="Tên khối"
+                className="mb-2"
+                required
+                rules={[
+                  { required: true, message: "Tên khối không được bỏ trống" },
                 ]}
-              />
-            </Form.Item>
+              >
+                <Select
+                  size="small"
+                  placeholder="Chọn lớp"
+                  style={{
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    borderRadius: "8px",
+                  }}
+                  options={[
+                    {
+                      label: "Lớp 1",
+                      value: ClassLevel.CLASS_LEVEL_1,
+                    },
+                    {
+                      label: "Lớp 2",
+                      value: ClassLevel.CLASS_LEVEL_2,
+                    },
+                    {
+                      label: "Lớp 3",
+                      value: ClassLevel.CLASS_LEVEL_3,
+                    },
+                    {
+                      label: "Lớp 4",
+                      value: ClassLevel.CLASS_LEVEL_4,
+                    },
+                    {
+                      label: "Lớp 5",
+                      value: ClassLevel.CLASS_LEVEL_5,
+                    },
+                  ]}
+                />
+              </Form.Item>
+            )}
+
             <Form.Item
               name="name"
               label="Tên lớp học"
@@ -410,6 +421,17 @@ const ClassList: React.FC = () => {
               rules={[validateRequireInput("Tên lớp học không được bỏ trống")]}
             >
               <Input placeholder="Nhập tên lớp học muốn thêm" />
+            </Form.Item>
+            <Form.Item
+              name="classCode"
+              label="Mã lớp"
+              className="mb-2"
+              required
+              rules={[
+                { required: true, message: "Mã lớp không được bỏ trống" },
+              ]}
+            >
+              <Input type="text" placeholder="Nhập mã lớp" />
             </Form.Item>
             {user?.role === "ADMIN" && (
               <Form.Item

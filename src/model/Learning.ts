@@ -238,6 +238,24 @@ class Learning extends Base {
     const res = await this.apiGet(`/teachers/all`, params); // Adjust the endpoint as necessary
     return res.data;
   };
+
+  // join student to class
+  joinClass = async (body?: any) => {
+    const res = await this.apiPostWithoutPrefix(
+      `/classroom-auth/join/${body?.id}`,
+      body,
+    );
+    return res.data;
+  };
+
+  // leave student from class
+  leaveClass = async (body?: any) => {
+    const res = await this.apiPostWithoutPrefix(
+      `/classroom-auth/leave/${body?.id}`,
+      body,
+    );
+    return res.data;
+  };
 }
 
 export default new Learning("");

@@ -30,6 +30,13 @@ export const MenuSystem = () => {
       icon: <DashboardIcon />,
       hidden: false,
     },
+    {
+      key: "/student",
+      label: "Học sinh",
+      path: "/student",
+      hidden: false,
+      icon: <DashboardIcon />,
+    },
     // {
     //   key: "/friend",
     //   label: "Bạn bè",
