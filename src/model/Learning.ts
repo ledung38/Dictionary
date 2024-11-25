@@ -180,8 +180,10 @@ class Learning extends Base {
 
   // Chỉnh sửa mới lớp
   editClass = async (body?: any) => {
-    console.log("body", body);
-    const res = await this.apiPutWithoutPrefix(`/classroom-auth/:id`, body);
+    const res = await this.apiPutWithoutPrefix(
+      `/classroom-auth/${body?.id}`,
+      body,
+    );
     return res.data;
   };
 

@@ -124,6 +124,13 @@ export const AdminSystem = (admin: any) => {
               hidden: !(admin?.role === "ADMIN"),
               icon: <DotIcon color="white" size={20} />,
             },
+            {
+              key: "/approve-request/class",
+              label: "Lớp học",
+              path: "/approve-request/class",
+              hidden: !(admin?.role === "ADMIN"),
+              icon: <DotIcon color="white" size={20} />,
+            },
           ],
           hidden: !(admin?.role === "ADMIN"),
         },

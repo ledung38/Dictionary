@@ -30,6 +30,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { ClassLevel } from "@/utils/enum";
 import User from "@/model/User";
+import { GenerateUtils } from "@/utils/generate";
 
 interface Class {
   id: number;
@@ -74,9 +75,11 @@ const ClassList: React.FC = () => {
 
   // API lấy danh sách lớp
   const { isFetching, refetch } = useQuery({
-    queryKey: ["getListClass"],
-    queryFn: async () => {
-      const res = await Learning.getListClass();
+    queryKey: ["getListClass", searchText],
+    queryFn: async ({ queryKey: [_, searchText] }) => {
+      const res = await Learning.getListClass({
+        name: searchText,
+      });
       setLstClass(res.content);
       setFilteredLstClass(res.content);
       return res as Class[];
@@ -129,7 +132,7 @@ const ClassList: React.FC = () => {
 
   // Upload file
   const uploadFileMutation = useMutation({
-    mutationFn: UploadModel.uploadFile,
+    mutationFn: UploadModel.image,
     onSuccess: async (res: any) => {
       form.setFieldValue("file", res);
       setModalCreate({ ...modalCreate, file: res });
@@ -184,6 +187,8 @@ const ClassList: React.FC = () => {
                     teacherName: record.teacher.name,
                     file: record.thumbnailPath,
                     classLevel: record.classLevel,
+                    teacherId: record.teacherId,
+                    id: record.id,
                   });
                   setModalCreate({
                     ...modalCreate,
@@ -230,17 +235,18 @@ const ClassList: React.FC = () => {
 
   const handleSearch = useCallback(
     debounce((searchText: string) => {
-      if (searchText) {
-        setFilteredLstClass(
-          lstClass.filter((item: any) =>
-            (item?.content ?? "")
-              .toLowerCase()
-              .includes(searchText.toLowerCase()),
-          ),
-        );
-      } else {
-        setFilteredLstClass(lstClass);
-      }
+      // if (searchText) {
+      //   // setFilteredLstClass(
+      //   //   lstClass.filter((item: any) =>
+      //   //     (item?.content ?? "")
+      //   //       .toLowerCase()
+      //   //       .includes(searchText.toLowerCase()),
+      //   //   ),
+      //   // );
+      // } else {
+      //   setFilteredLstClass(lstClass);
+      // }
+      refetch();
     }, 300),
     [lstClass],
   );
@@ -350,7 +356,7 @@ const ClassList: React.FC = () => {
                 teacherId: form.getFieldValue("teacherId"),
                 name: value.name,
                 thumbnailPath: value.file,
-                id: value.id,
+                id: form.getFieldValue("id"),
               });
             }}
           >
@@ -451,7 +457,7 @@ const ClassList: React.FC = () => {
               {modalCreate.file ? (
                 <Image
                   className=""
-                  src={modalCreate.file}
+                  src={GenerateUtils.genUrlImage(modalCreate.file)}
                   alt="Ảnh chủ đề"
                   style={{ width: 300 }}
                 />
