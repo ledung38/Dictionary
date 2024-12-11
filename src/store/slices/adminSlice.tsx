@@ -13,6 +13,7 @@ export const adminSlice = createSlice({
       return state;
     },
     logout: (state) => {
+      localStorage.removeItem("access_token");
       state = null;
       return state;
     },

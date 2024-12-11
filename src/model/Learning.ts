@@ -4,7 +4,7 @@ import { Base } from "./Base";
 class Learning extends Base {
   // Danh sách topic
   getAllTopics = async (params?: any) => {
-    const res = await this.apiGet("/topics/all", params);
+    const res = await this.apiGetWithoutPrefix("/topic/all", params);
     return res.data;
   };
 
@@ -28,19 +28,19 @@ class Learning extends Base {
 
   // Thêm mới topics
   addTopics = async (body: any) => {
-    const res = await this.apiPost("/topics", body);
+    const res = await this.apiPostWithoutPrefix("/topic-auth", body);
     return res.data;
   };
 
   // Chỉnh sửa topics
   editTopics = async (body: any) => {
-    const res = await this.apiPut("/topics", body);
+    const res = await this.apiPutWithoutPrefix(`/topic-auth/${body.id}`, body);
     return res.data;
   };
 
   // Xoá chủ đề
   deleteTopics = async (id: any) => {
-    const res = await this.apiDelete(`/topics/${id}`);
+    const res = await this.apiDeleteWithoutPrefix(`/topic-auth/${id}`);
     return res.data;
   };
 

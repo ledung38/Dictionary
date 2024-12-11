@@ -120,6 +120,9 @@ const ClassList: React.FC = () => {
       setModalCreate({ ...modalCreate, open: false, file: "" });
       form.resetFields();
     },
+    onError: (error: any) => {
+      message.error(error.data.message);
+    },
   });
 
   // Xoá lớp
@@ -128,6 +131,9 @@ const ClassList: React.FC = () => {
     onSuccess: () => {
       message.success("Xoá lớp học thành công");
       refetch();
+    },
+    onError: (error: any) => {
+      message.error(error.data.message);
     },
   });
 
@@ -138,9 +144,8 @@ const ClassList: React.FC = () => {
       form.setFieldValue("file", res);
       setModalCreate({ ...modalCreate, file: res });
     },
-    onError: (error: Error) => {
-      console.error(error);
-      message.error("File đã được lưu trước đó");
+    onError: (error: any) => {
+      message.error(error.data.message);
     },
   });
 
@@ -182,8 +187,8 @@ const ClassList: React.FC = () => {
     },
     (user?.role === "ADMIN" || user?.role === "TEACHER") && {
       title: "Hành động",
-      key: "actions",
-      dataIndex: "classRoomName",
+      dataIndex: "id",
+      key: "id",
       render: (value: any, record: Class) => (
         <div className="flex space-x-2">
           <Button
@@ -360,7 +365,10 @@ const ClassList: React.FC = () => {
             onFinish={(value) => {
               mutationCreateUpdate.mutate({
                 classLevel: value.classLevel,
-                teacherId: form.getFieldValue("teacherId"),
+                teacherId:
+                  user?.role === "ADMIN"
+                    ? form.getFieldValue("teacherId")
+                    : user.id,
                 name: value.name,
                 thumbnailPath: value.file,
                 id: form.getFieldValue("id"),

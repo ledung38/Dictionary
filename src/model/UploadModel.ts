@@ -4,7 +4,7 @@ import { Base } from "./Base";
 class UploadModel extends Base {
   // upload
   uploadFile = async (body: FormData) => {
-    const res = await this.apiUploadFile("/api/upload", body);
+    const res = await this.apiUploadFile("/file", body);
     return res.data;
   };
 

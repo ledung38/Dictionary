@@ -1,24 +1,45 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Button, Form, Input, Select, Table, message, Upload, Image } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined } from "@ant-design/icons";
 import { CloseIcon } from "@/assets/icons";
 import BasicDrawer from "@/components/UI/draw/BasicDraw";
 import InputPrimary from "@/components/UI/Input/InputPrimary";
 import Learning from "@/model/Learning";
 import UploadModel from "@/model/UploadModel";
+import { RootState } from "@/store";
+import { GenerateUtils } from "@/utils/generate";
 import { validateRequireInput } from "@/utils/validation/validtor";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  Button,
+  Form,
+  Image,
+  Input,
+  message,
+  Select,
+  Table,
+  Upload,
+  UploadProps,
+} from "antd";
+import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 
 interface Topic {
+  id: number;
   topicName?: string;
-  content: string;
+  name: string;
   imageLocation: string;
   videoLocation?: string;
-  classRoomContent: string;
+  classroom: any;
 }
 
 const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
+  const user: User = useSelector((state: RootState) => state.admin);
+
   const [form] = Form.useForm();
   const [lstTopics, setLstTopics] = useState<Topic[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -28,8 +49,9 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
     file: "",
     typeModal: "create",
     type: "topic",
+    video: "",
   });
-  const [filterParams, setFilterParams] = useState({ classRoomContent: "" });
+  const [filterParams, setFilterParams] = useState<any>({});
   const pageSize = 10;
 
   const handleTableChange = (newPage: number) => {
@@ -40,9 +62,9 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
     queryKey: ["getListClass"],
     queryFn: async () => {
       const res = await Learning.getListClass();
-      return res.data.map((item: { content: string }) => ({
-        label: item.content,
-        value: item.content,
+      return res.content.map((item: any) => ({
+        label: item?.name,
+        value: item?.id,
       }));
     },
   });
@@ -52,10 +74,10 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
     queryFn: async () => {
       const res = await Learning.getAllTopics({
         ...filterParams,
-        isPrivate: `${isPrivate}`,
+        isCommon: `${!isPrivate}`,
       });
-      setLstTopics(res.data);
-      return res.data as Topic[];
+      setLstTopics(res.content);
+      return res.content as Topic[];
     },
   });
 
@@ -64,10 +86,13 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
   }, [filterParams]);
 
   const mutationCreateUpdate = useMutation({
-    mutationFn: modalCreate.typeModal === "create" ? Learning.addTopics : Learning.editTopics,
+    mutationFn:
+      modalCreate.typeModal === "create"
+        ? Learning.addTopics
+        : Learning.editTopics,
     onSuccess: () => {
       message.success(
-        `${modalCreate.typeModal === "create" ? "Thêm mới thành công" : "Cập nhật thành công"}`
+        `${modalCreate.typeModal === "create" ? "Thêm mới thành công" : "Cập nhật thành công"}`,
       );
       refetch();
       setModalCreate({ ...modalCreate, open: false, file: "" });
@@ -91,8 +116,8 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
       form.setFieldValue("file", res);
       setModalCreate({ ...modalCreate, file: res });
     },
-    onError: () => {
-      message.error("File đã được lưu trước đó");
+    onError: (error: any) => {
+      message.error(error?.data?.message);
     },
   });
 
@@ -100,13 +125,14 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
     {
       title: "STT",
       key: "index",
-      render: (_: any, __: any, index: number) => (currentPage - 1) * pageSize + index + 1,
+      render: (_: any, __: any, index: number) =>
+        (currentPage - 1) * pageSize + index + 1,
       width: 50,
     },
     {
       title: "Tên chủ đề",
-      dataIndex: "content",
-      key: "content",
+      dataIndex: "name",
+      key: "name",
       render: (value: string) => <div className="text-lg">{value}</div>,
     },
     {
@@ -115,21 +141,25 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
       key: "image",
       render: (text: string) => (
         <>
-          {text ? <Image src={text} alt="" /> : <div className="">Không có ảnh minh hoạ</div>}
+          {text ? (
+            <Image src={GenerateUtils.genUrlImage(text)} alt="" />
+          ) : (
+            <div className="">Không có ảnh minh hoạ</div>
+          )}
         </>
       ),
       width: 200,
     },
     {
       title: "Thuộc lớp",
-      dataIndex: "classRoomContent",
-      key: "classRoomContent",
-      render: (value: string) => <div className="text-lg">{value}</div>,
+      dataIndex: "classroom",
+      key: "classroom",
+      render: (value: any) => <div className="text-lg">{value?.name}</div>,
     },
     {
       title: "Hành động",
-      key: "topicName",
-      dataIndex: "topicName",
+      key: "id",
+      dataIndex: "id",
       render: (value: any, record: any) => (
         <div className="flex space-x-2">
           <Button
@@ -138,7 +168,7 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
               form.setFieldsValue({
                 ...record,
                 file: record.imageLocation,
-                classRoomContent: record.classRoomContent,
+                classroomId: record.classroomId,
               });
               setModalCreate({
                 ...modalCreate,
@@ -149,7 +179,11 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
               });
             }}
           />
-          <Button icon={<DeleteOutlined />} danger onClick={() => mutationDel.mutate(value)} />
+          <Button
+            icon={<DeleteOutlined />}
+            danger
+            onClick={() => mutationDel.mutate(value)}
+          />
         </div>
       ),
     },
@@ -181,6 +215,7 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
 
   const isLoading = isFetching || mutationCreateUpdate.isPending;
 
+  console.log("form", form.getFieldsValue());
   return (
     <div className="w-full p-4">
       <h1 className="mb-4 text-2xl font-bold">Danh sách chủ đề</h1>
@@ -197,13 +232,7 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
             value={searchText}
             onChange={(e) => {
               setSearchText(e.target.value);
-              if (e.target.value) {
-                mutation.mutate({
-                  page: 1,
-                  size: pageSize,
-                  search: e.target.value,
-                });
-              }
+              setFilterParams({ name: e.target.value });
             }}
           />
           <Select
@@ -211,7 +240,7 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
             placeholder="Lọc theo lớp"
             options={allClass}
             onChange={(value) => {
-              setFilterParams({ classRoomContent: value });
+              setFilterParams({ classroomId: value });
             }}
           />
         </div>
@@ -280,19 +309,19 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
             onFinish={(value) => {
               mutationCreateUpdate.mutate({
                 topicName: value.topicName,
-                content: value.content,
+                name: value.name,
                 imageLocation: value.file,
                 videoLocation: value.video,
-                classRoomContent: value.classRoomContent,
+                classroomId: value.classroomId,
+                creatorId: user.id,
+                isCommon: user.role == "ADMIN" ? true : false,
+                id: form.getFieldValue("id"),
               });
             }}
           >
+            <Form.Item name="topicName" hidden />
             <Form.Item
-              name="topicName"
-              hidden
-            />
-            <Form.Item
-              name="content"
+              name="name"
               label="Tên chủ đề"
               className="mb-2"
               required
@@ -301,7 +330,7 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
               <Input placeholder="Nhập tên chủ đề muốn thêm" />
             </Form.Item>
             <Form.Item
-              name="classRoomContent"
+              name="classroomId"
               label="Thuộc lớp"
               className="mb-2"
               required
@@ -318,7 +347,7 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
               {modalCreate.file ? (
                 <Image
                   className=""
-                  src={modalCreate.file}
+                  src={GenerateUtils.genUrlImage(modalCreate.file)}
                   alt="Ảnh chủ đề"
                   style={{ width: 300 }}
                 />
@@ -331,12 +360,11 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
             </Form.Item>
             <div className="flex w-full items-center justify-center">
               {modalCreate.video ? (
-                <video
-                  key={modalCreate.video}
-                  controls
-                  style={{ width: 300 }}
-                >
-                  <source src={modalCreate.video} type="video/mp4" />
+                <video key={modalCreate.video} controls style={{ width: 300 }}>
+                  <source
+                    src={GenerateUtils.genUrlImage(modalCreate.video)}
+                    type="video/mp4"
+                  />
                 </video>
               ) : null}
             </div>
