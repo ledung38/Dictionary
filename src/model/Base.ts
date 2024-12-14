@@ -28,13 +28,13 @@ export class Base {
 
   apiGet = (url: string, query = {}, signal?: any) =>
     http.get(`${this.apiPrefix}${url}`, {
-      params: this.normalizeQuery(query),
+      params: query,
       signal,
     });
 
   apiGetWithoutPrefix = (url: string, query = {}, signal?: any) =>
     http.get(`${this.apiRoot}${url}`, {
-      params: this.normalizeQuery(query),
+      params: query,
       signal,
     });
 

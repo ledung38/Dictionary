@@ -4,6 +4,7 @@ import { Base } from "./Base";
 class Learning extends Base {
   // Danh sách topic
   getAllTopics = async (params?: any) => {
+    console.log("params", params);
     const res = await this.apiGetWithoutPrefix("/topic/all", params);
     return res.data;
   };
@@ -46,25 +47,25 @@ class Learning extends Base {
 
   // Danh sách từ vựng
   getAllVocabulary = async (param?: any) => {
-    const res = await this.apiGet("/vocabularies/all", param);
+    const res = await this.apiGetWithoutPrefix("/vocabulary/all", param);
     return res.data;
   };
 
   // CHi tiết từ vựng
   getDetailVocabularyById = async (id?: string) => {
-    const res = await this.apiGet(`/vocabularies/get-by-id/${id}`);
+    const res = await this.apiGetWithoutPrefix(`/vocabulary/${id}`);
     return res.data;
   };
 
   // Chi tiết nội dung media của từ
   getDetailVocabulary = async (id?: string) => {
-    const res = await this.apiGet(`/vocabularies/${id}`);
+    const res = await this.apiGetWithoutPrefix(`/vocabulary/${id}`);
     return res.data;
   };
 
   // Thêm từ vựng mới
   addVocabulary = async (body: any) => {
-    const res = await this.apiPost("/vocabularies", body);
+    const res = await this.apiPostWithoutPrefix("/vocabulary-auth", body);
     return res.data;
   };
 
@@ -79,7 +80,10 @@ class Learning extends Base {
 
   // edit
   editVocabulary = async (body: any) => {
-    const res = await this.apiPut("/vocabularies", body);
+    const res = await this.apiPutWithoutPrefix(
+      `/vocabulary-auth/${body.id}`,
+      body,
+    );
     return res.data;
   };
 
@@ -91,7 +95,7 @@ class Learning extends Base {
 
   // Xoá từ vựng
   deleteVocabulary = async (body: any) => {
-    const res = await this.apiDeleteBody(`/vocabularies/delete-list`, body);
+    const res = await this.apiDeleteBody(`vocabulary-auth/delete-list`, body);
     return res.data;
   };
 

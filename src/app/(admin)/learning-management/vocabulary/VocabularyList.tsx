@@ -36,10 +36,11 @@ import { isImageLocation } from "./create-edit/VocabularyCreateUpdate";
 import { filterOption } from "@/components/Dashboard/DashboardApp";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { GenerateUtils } from "@/utils/generate";
 
 interface FilterParams {
   topicId: number;
-  contentSearch: string;
+  content: string;
   vocabularyType?: string;
 }
 
@@ -58,7 +59,7 @@ const VocabularyList = ({ isPrivate }: any) => {
   // danh sách topics
   const [filterParams, setFilterParams] = useState<FilterParams>({
     topicId: 0,
-    contentSearch: "",
+    content: "",
     vocabularyType: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
@@ -103,6 +104,7 @@ const VocabularyList = ({ isPrivate }: any) => {
     open: false,
     record: "",
   });
+  console.log("isPrivete", isPrivate);
 
   // Thêm từ vào chủ đề
   const [modalAddVocabularyTopic, setModalAddVocabularyTopic] = useState<{
@@ -122,11 +124,11 @@ const VocabularyList = ({ isPrivate }: any) => {
     queryKey: ["getAllTopics"],
     queryFn: async () => {
       const res = await Learning.getAllTopics();
-      return res?.data?.map((item: { topicId: any; content: any }) => ({
-        id: item.topicId,
-        value: item.topicId,
-        label: item.content,
-        text: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        id: item.id,
+        value: item.id,
+        label: item.name,
+        text: item.name,
       }));
     },
   });
@@ -141,29 +143,30 @@ const VocabularyList = ({ isPrivate }: any) => {
     queryFn: async () => {
       const res = await Learning.getAllVocabulary({
         ...filterParams,
-        isPrivate: !(user.role === "ADMIN" && !isPrivate) && `${isPrivate}`,
+        isPrivate: isPrivate,
+        creatorId: isPrivate ? user.id : undefined,
       });
       // Sắp xếp priamry lên đầu
-      res?.data?.forEach(
-        (item: {
-          vocabularyImageResList: any[];
-          vocabularyVideoResList: any[];
-        }) => {
-          item.vocabularyImageResList?.sort(
-            (a: { primary: any }, b: { primary: any }) => {
-              // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
-              return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
-            },
-          );
-          item.vocabularyVideoResList?.sort(
-            (a: { primary: any }, b: { primary: any }) => {
-              // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
-              return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
-            },
-          );
-        },
-      );
-      return res.data;
+      // res?.data?.forEach(
+      //   (item: {
+      //     imagesPath: any[];
+      //     videosPath: any[];
+      //   }) => {
+      //     item.imagesPath?.sort(
+      //       (a: { primary: any }, b: { primary: any }) => {
+      //         // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
+      //         return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
+      //       },
+      //     );
+      //     item.videosPath?.sort(
+      //       (a: { primary: any }, b: { primary: any }) => {
+      //         // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
+      //         return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
+      //       },
+      //     );
+      //   },
+      // );
+      return res.content;
     },
   });
 
@@ -187,8 +190,8 @@ const VocabularyList = ({ isPrivate }: any) => {
       setOpenEdit(false);
       refetch();
     },
-    onError: () => {
-      message.error("Cập nhật từ vựng thất bại");
+    onError: (error: any) => {
+      message.error(error?.data?.message);
     },
   });
 
@@ -226,6 +229,7 @@ const VocabularyList = ({ isPrivate }: any) => {
     },
   });
 
+  console.log("value", form.getFieldsValue());
   // Column
   const columns = [
     {
@@ -250,10 +254,10 @@ const VocabularyList = ({ isPrivate }: any) => {
     },
     {
       title: "Chủ đề",
-      dataIndex: "topicContent",
-      key: "topicContent",
-      render: (content: string) => (
-        <span style={{ fontWeight: 500 }}>{content}</span>
+      dataIndex: "topic",
+      key: "topic",
+      render: (topic: any) => (
+        <span style={{ fontWeight: 500 }}>{topic?.name}</span>
       ),
       ellipsis: true,
       width: 100,
@@ -270,23 +274,20 @@ const VocabularyList = ({ isPrivate }: any) => {
     },
     {
       title: "Ảnh minh hoạ",
-      dataIndex: "imageLocation",
-      key: "imageLocation",
+      dataIndex: "imagesPath",
+      key: "imagesPath",
       render: (
         imageLocation: any,
         record: {
-          vocabularyImageResList: string | any[];
+          imagesPath: string | any[];
           content: string | undefined;
         },
       ) => {
-        if (
-          record.vocabularyImageResList?.length &&
-          record.vocabularyImageResList[0].imageLocation
-        ) {
+        if (record.imagesPath?.length && record.imagesPath[0]) {
           return (
             <Image
               width={100}
-              src={record.vocabularyImageResList[0].imageLocation}
+              src={GenerateUtils.genUrlImage(record.imagesPath[0])}
               alt={record.content}
             />
           );
@@ -298,24 +299,18 @@ const VocabularyList = ({ isPrivate }: any) => {
     },
     {
       title: "Video minh hoạ",
-      dataIndex: "videoLocation",
-      key: "videoLocation",
+      dataIndex: "videosPath",
+      key: "videosPath",
       align: "center",
-      render: (
-        videoLocation: any,
-        record: { vocabularyVideoResList: string | any[] },
-      ) => {
-        if (
-          record.vocabularyVideoResList?.length &&
-          record.vocabularyVideoResList[0].videoLocation
-        ) {
+      render: (videoLocation: any, record: { videosPath: string | any[] }) => {
+        if (record.videosPath?.length && record.videosPath[0].videoLocation) {
           return (
             <EyeOutlined
               style={{ fontSize: "1.5rem" }}
               onClick={() =>
                 setModalPreview({
                   open: true,
-                  file: record.vocabularyVideoResList[0].videoLocation,
+                  file: record.videosPath[0].videoLocation,
                 })
               }
             />
@@ -328,8 +323,8 @@ const VocabularyList = ({ isPrivate }: any) => {
     },
     {
       title: "Hành động",
-      dataIndex: "vocabularyId",
-      key: "vocabularyId",
+      dataIndex: "id",
+      key: "id",
       align: "center",
       render: (value: any, record: any) => (
         <div className="flex space-x-2">
@@ -338,8 +333,8 @@ const VocabularyList = ({ isPrivate }: any) => {
             onClick={() => {
               setOpenEdit(true);
               setPreview({
-                fileImage: record?.vocabularyImageResList[0]?.imageLocation,
-                fileVideo: record?.vocabularyVideoResList[0]?.videoLocation,
+                fileImage: record?.imagesPath?.length && record?.imagesPath[0],
+                fileVideo: record?.videosPath?.length && record?.videosPath[0],
               });
               form.setFieldsValue(record);
             }}
@@ -439,7 +434,7 @@ const VocabularyList = ({ isPrivate }: any) => {
             onChange={(e) => {
               setFilterParams({
                 ...filterParams,
-                contentSearch: e.target.value,
+                content: e.target.value,
               });
             }}
             size="large"
@@ -489,7 +484,7 @@ const VocabularyList = ({ isPrivate }: any) => {
         columns={columns as any}
         dataSource={allVocabulary}
         loading={isLoading}
-        rowKey={(record) => record.vocabularyId}
+        rowKey={(record: any) => record.id}
         // scroll={{ x: 600 }}
         pagination={{
           pageSize: pageSize,
@@ -536,7 +531,7 @@ const VocabularyList = ({ isPrivate }: any) => {
               mutationCreate.mutate({ ...value, private: isPrivate });
             }}
           >
-            <Form.Item name="vocabularyId" noStyle hidden />
+            <Form.Item name="id" noStyle hidden />
 
             <Form.Item
               name="topicId"
@@ -595,7 +590,7 @@ const VocabularyList = ({ isPrivate }: any) => {
             >
               <TextArea maxLength={200} showCount placeholder="Nhập mô tả" />
             </Form.Item>
-            <Form.Item name="note" label="Mô tả">
+            <Form.Item name="description" label="Mô tả">
               <TextArea maxLength={200} showCount placeholder="Nhập mô tả" />
             </Form.Item>
             <Form.Item name="vocabularyType" hidden />

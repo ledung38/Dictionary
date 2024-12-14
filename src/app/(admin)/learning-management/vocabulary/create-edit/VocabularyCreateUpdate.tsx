@@ -4,6 +4,8 @@ import Breadcrumb from "@/components/UI/Breadcrumbs/Breadcrumb";
 import { AvatarUpload } from "@/components/UI/Upload/AvatarUpload";
 import Learning from "@/model/Learning";
 import UploadModel from "@/model/UploadModel";
+import { RootState } from "@/store";
+import { GenerateUtils } from "@/utils/generate";
 import { validateRequireInput } from "@/utils/validation/validtor";
 import { UploadOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -28,6 +30,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import styled from "styled-components";
 import { setTimeout } from "timers";
 
@@ -66,6 +69,7 @@ const VocabularyCreateUpdate: React.FC = () => {
   const [formUpload] = useForm();
   const searchParams = useSearchParams();
   const isPrivate = searchParams.get("isPrivate");
+  const user: User = useSelector((state: RootState) => state.admin);
 
   //state
   const [tabKey, setTabKey] = useState("1");
@@ -97,16 +101,20 @@ const VocabularyCreateUpdate: React.FC = () => {
     form.resetFields();
   }, [tabKey]);
 
+  console.log("isPrivate", isPrivate);
+
   // API lấy danh sách  topics
   const { data: allTopics, isFetching: isFetchingTopic } = useQuery({
     queryKey: ["getAllTopics", isPrivate],
     queryFn: async () => {
-      const res = await Learning.getAllTopics({ isPrivate: isPrivate });
-      return res?.data?.map((item: { topicId: any; content: any }) => ({
-        id: item.topicId,
-        value: item.topicId,
-        label: item.content,
-        text: item.content,
+      const res = await Learning.getAllTopics({
+        isCommon: isPrivate === "false",
+      });
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        id: item.id,
+        value: item.id,
+        label: item.name,
+        text: item.name,
       }));
     },
     enabled: !!isPrivate,
@@ -119,13 +127,8 @@ const VocabularyCreateUpdate: React.FC = () => {
       message.success("Thêm mới từ thành công");
       router.back();
     },
-    onError: ({ response }: any) => {
-      const { data } = response;
-      if (data.code === 409) {
-        message.error("Từ vựng đã tồn tại");
-        return;
-      }
-      message.error("Thêm mới từ vựng thất bại");
+    onError: (error: any) => {
+      message.error(error?.data?.message);
     },
   });
 
@@ -138,28 +141,18 @@ const VocabularyCreateUpdate: React.FC = () => {
           ...preview,
           fileImage: res,
         });
-        form.setFieldValue("vocabularyImageReqs", [
-          {
-            imageLocation: res,
-            primary: true,
-          },
-        ]);
+        form.setFieldValue("imagesPath", [res]);
       } else {
         setPreview({
           ...preview,
           fileVideo: res,
         });
-        form.setFieldValue("vocabularyVideoReqs", [
-          {
-            videoLocation: res,
-            primary: true,
-          },
-        ]);
+        form.setFieldValue("videosPath", [res]);
       }
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       console.error(error);
-      message.error("File đã được lưu trước đó");
+      message.error(error?.data?.message);
     },
   });
 
@@ -220,6 +213,7 @@ const VocabularyCreateUpdate: React.FC = () => {
       setIsLoadingFile(false);
     }, 2000);
   };
+  console.log("value", form.getFieldsValue());
 
   const handleUpload = async (value: any) => {
     setIsLoadingUploadLst(true);
@@ -242,14 +236,14 @@ const VocabularyCreateUpdate: React.FC = () => {
           videoLocation: any;
         }) => ({
           content: e.content,
-          vocabularyImageReqs: [
+          imagesPath: [
             {
               imageLocation: e.imageLocation,
               vocabularyId: e.vocabularyId,
               primary: true,
             },
           ],
-          vocabularyVideoReqs: [
+          videosPath: [
             {
               vocabularyId: e.vocabularyId,
               videoLocation: e.videoLocation,
@@ -311,11 +305,11 @@ const VocabularyCreateUpdate: React.FC = () => {
                 onFinish={(value) => {
                   mutationCreate.mutate({
                     ...value,
-                    vocabularyImageReqs:
-                      value?.vocabularyImageReqs || undefined,
-                    vocabularyVideoReqs:
-                      value?.vocabularyVideoReqs || undefined,
-                    private: isPrivate,
+                    imagesPath: value?.imagesPath || undefined,
+                    videosPath: value?.videosPath || undefined,
+                    creatorId: user?.id,
+                    status: user.role === "ADMIN" ? "APPROVED" : "PENDING",
+                    isPrivate: isPrivate,
                   });
                 }}
               >
@@ -398,7 +392,7 @@ const VocabularyCreateUpdate: React.FC = () => {
                   </Form.Item>
                 ) : null}
 
-                <Form.Item name="note" label="Mô tả">
+                <Form.Item name="description" label="Mô tả">
                   <TextArea
                     maxLength={200}
                     showCount
@@ -407,8 +401,8 @@ const VocabularyCreateUpdate: React.FC = () => {
                 </Form.Item>
                 <Form.Item name="vocabularyType" hidden />
                 <div className="flex flex-col gap-4">
-                  <Form.Item name="vocabularyImageReqs" noStyle />
-                  <Form.Item name="vocabularyVideoReqs" noStyle />
+                  <Form.Item name="imagesPath" noStyle />
+                  <Form.Item name="videosPath" noStyle />
 
                   <Upload {...props} showUploadList={false} accept="image/*">
                     <Button icon={<UploadOutlined />}>Tải file ảnh</Button>
@@ -422,7 +416,7 @@ const VocabularyCreateUpdate: React.FC = () => {
                     <>
                       <Image
                         className=""
-                        src={preview.fileImage}
+                        src={GenerateUtils.genUrlImage(preview.fileImage)}
                         alt="Ảnh chủ đề"
                         style={{ width: 300 }}
                       />
@@ -432,7 +426,7 @@ const VocabularyCreateUpdate: React.FC = () => {
                             ...preview,
                             fileImage: "",
                           });
-                          form.setFieldValue("vocabularyImageReqs", undefined);
+                          form.setFieldValue("imagesPath", undefined);
                         }}
                       >
                         Xoá ảnh
@@ -442,7 +436,9 @@ const VocabularyCreateUpdate: React.FC = () => {
                   {preview.fileVideo ? (
                     <>
                       <video controls style={{ width: 400, height: "auto" }}>
-                        <source src={preview.fileVideo} />
+                        <source
+                          src={GenerateUtils.genUrlImage(preview.fileVideo)}
+                        />
                       </video>
                       <Button
                         onClick={() => {
@@ -450,7 +446,7 @@ const VocabularyCreateUpdate: React.FC = () => {
                             ...preview,
                             fileVideo: "",
                           });
-                          form.setFieldValue("vocabularyVideoReqs", undefined);
+                          form.setFieldValue("videosPath", undefined);
                         }}
                       >
                         Xoá video
