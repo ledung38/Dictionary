@@ -97,8 +97,8 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
       refetch();
       setModalCreate({ ...modalCreate, open: false, file: "" });
     },
-    onError: () => {
-      message.error("Đã có lỗi sảy ra. Vui lòng thử lại sau");
+    onError: (error: any) => {
+      message.error(error?.data?.message);
     },
   });
 
@@ -314,7 +314,7 @@ const TopicList: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
                 videoLocation: value.video,
                 classroomId: value.classroomId,
                 creatorId: user.id,
-                isCommon: user.role == "ADMIN" ? true : false,
+                isCommon: `${!isPrivate}`,
                 id: form.getFieldValue("id"),
               });
             }}

@@ -1,5 +1,6 @@
 import { isImage } from "@/components/common/constants";
 import UploadModel from "@/model/UploadModel";
+import { GenerateUtils } from "@/utils/generate";
 import { DeleteOutlined, EyeFilled, PlusOutlined } from "@ant-design/icons";
 import { Image, message, Modal, Upload } from "antd";
 import { isFunction } from "lodash";
@@ -123,7 +124,7 @@ export const MediaUpload: FC<MediaUploadProps> = ({
                     width: uploadWidth || 200,
                     height: uploadHeight || 200,
                   }}
-                  src={e}
+                  src={GenerateUtils.genUrlImage(e)}
                 />
               )}
               {!isImage(e) && (
@@ -134,7 +135,7 @@ export const MediaUpload: FC<MediaUploadProps> = ({
                     height: uploadHeight || 200,
                   }}
                 >
-                  <source src={e} type="video/mp4" />
+                  <source src={GenerateUtils.genUrlImage(e)} type="video/mp4" />
                 </video>
               )}
               <div className="absolute inset-0 flex cursor-pointer items-center justify-center gap-1 bg-[#1f1c1c] opacity-0 transition-opacity duration-300 hover:opacity-70">
@@ -201,11 +202,14 @@ export const MediaUpload: FC<MediaUploadProps> = ({
             style={{
               width: "100%",
             }}
-            src={preview.media}
+            src={GenerateUtils.genUrlImage(preview.media)}
           />
         ) : (
           <video controls style={{ width: "100%" }}>
-            <source src={preview.media} type="video/mp4" />
+            <source
+              src={GenerateUtils.genUrlImage(preview.media)}
+              type="video/mp4"
+            />
           </video>
         )}
       </Modal>

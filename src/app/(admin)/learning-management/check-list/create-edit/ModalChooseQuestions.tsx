@@ -101,7 +101,7 @@ const ModalChooseQuestions: React.FC<ModalChooseQuestionsProps> = ({
   const { data: lstQuestion, isFetching } = useQuery({
     queryKey: ["getLstQuestionClass", classRoomId],
     queryFn: async () => {
-      const res = await Questions.getLstQuestionClass(classRoomId);
+      const res = await Questions.getAllQuestion({ classRoomId });
       return res.data;
     },
     enabled: open && !!classRoomId,

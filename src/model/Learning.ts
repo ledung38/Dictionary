@@ -47,7 +47,10 @@ class Learning extends Base {
 
   // Danh sách từ vựng
   getAllVocabulary = async (param?: any) => {
-    const res = await this.apiGetWithoutPrefix("/vocabulary/all", param);
+    const res = await this.apiGetWithoutPrefix(
+      `/vocabulary/all?${param?.isPrivate !== undefined && `isPrivate=${param?.isPrivate}`}`,
+      param,
+    );
     return res.data;
   };
 

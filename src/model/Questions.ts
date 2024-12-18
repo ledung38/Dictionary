@@ -4,7 +4,7 @@ import { Base } from "./Base";
 class Questions extends Base {
   // Danh sách câu hỏi
   getAllQuestion = async (params: any) => {
-    const res = await this.apiGet(`/questions/all`, params);
+    const res = await this.apiGetWithoutPrefix(`/question/all`, params);
     return res.data;
   };
 
@@ -16,7 +16,7 @@ class Questions extends Base {
 
   // Chi tiết câu hỏi
   getDetailQuestion = async (questionId: string | number) => {
-    const res = await this.apiGet(`/questions/detail/${questionId}`);
+    const res = await this.apiGetWithoutPrefix(`/question/${questionId}`);
     return res.data;
   };
 
@@ -39,19 +39,25 @@ class Questions extends Base {
 
   // Tạo câu hỏi
   addQuestion = async (body?: any) => {
-    const res = await this.apiPost(`/questions/add-list`, body);
+    const res = await this.apiPostWithoutPrefix(
+      `/question-auth/add-list`,
+      body,
+    );
     return res.data;
   };
 
   // Sửa câu hỏi
   editQuestion = async (body?: any) => {
-    const res = await this.apiPut(`/questions`, body);
+    const res = await this.apiPutWithoutPrefix(
+      `/question-auth/${body.id}`,
+      body,
+    );
     return res.data;
   };
 
   // Xoá câu bỏi
   deleteQuestion = async (body?: any) => {
-    const res = await this.apiDeleteBody(`/questions/delete-list`, body);
+    const res = await this.apiDeleteBody(`question-auth/delete-list`, body);
     return res.data;
   };
 
@@ -63,9 +69,11 @@ class Questions extends Base {
 
   // Xoá đáp án
   deleteAnswer = async (id?: any) => {
-    const res = await this.apiDelete(`/answers/${id}`);
+    const res = await this.apiDeleteWithoutPrefix(
+      `/question-auth/answers/${id}`,
+    );
     return res.data;
   };
 }
 
-export default new Questions("learning-service");
+export default new Questions("");

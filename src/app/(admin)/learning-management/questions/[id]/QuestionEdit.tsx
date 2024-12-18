@@ -24,6 +24,7 @@ import { useForm, useWatch } from "antd/es/form/Form";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import QuestionModal from "../../check-list/create-edit/ModalSelectFile";
+import { GenerateUtils } from "@/utils/generate";
 
 interface Answer {
   content: string;
@@ -73,7 +74,7 @@ const QuestionEdit: React.FC = () => {
     queryFn: async () => {
       if (id) {
         const res = await Questions.getDetailQuestion(Number(id));
-        const formValues = convertDataToFormValues(res?.data);
+        const formValues = convertDataToFormValues(res);
         form.setFieldsValue(formValues);
         if (formValues.questionType === "ONE_ANSWER") {
           const correctIndex = formValues.answerResList?.findIndex(
@@ -81,7 +82,7 @@ const QuestionEdit: React.FC = () => {
           );
           setDefaultAnswer(correctIndex);
         }
-        return res?.data;
+        return res;
       }
     },
     enabled: !!id,
@@ -92,9 +93,9 @@ const QuestionEdit: React.FC = () => {
     queryKey: ["getListClass"],
     queryFn: async () => {
       const res = await Learning.getListClass();
-      return res?.data?.map((item: { classRoomId: any; content: any }) => ({
-        value: item.classRoomId,
-        label: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        value: item.id,
+        label: item.name,
       }));
     },
   });
@@ -112,6 +113,9 @@ const QuestionEdit: React.FC = () => {
     onSuccess: () => {
       message.success("Xoá đáp án thành công");
     },
+    onError: (error: any) => {
+      message.error(error?.data?.message);
+    },
   });
 
   return (
@@ -125,19 +129,28 @@ const QuestionEdit: React.FC = () => {
               ...value,
               imageLocation: value.file
                 ? isImage(value.file)
-                  ? value.file
+                  ? GenerateUtils.genUrlImage(value.file)
                   : ""
-                : value.imageLocation,
+                : GenerateUtils.genUrlImage(value.imageLocation),
               videoLocation: value.file
                 ? !isImage(value.file)
-                  ? value.file
+                  ? GenerateUtils.genUrlImage(value.file)
                   : ""
-                : value.videoLocation,
+                : GenerateUtils.genUrlImage(value.videoLocation),
             };
             delete req.file;
             mutationEdit.mutate({
               ...req,
+              imageLocation: req?.imageLocation.replace(
+                process.env.NEXT_PUBLIC_IMAGE_ROOT + "/",
+                "",
+              ),
+              videoLocation: req?.videoLocation.replace(
+                process.env.NEXT_PUBLIC_IMAGE_ROOT + "/",
+                "",
+              ),
               updateAnswerReqs: req?.answerResList,
+              id: Number(id),
             });
           }}
           layout="vertical"
@@ -257,7 +270,7 @@ const QuestionEdit: React.FC = () => {
                   height: 200,
                   objectFit: "contain",
                 }}
-                src={imageLocation}
+                src={GenerateUtils.genUrlImage(imageLocation)}
               />
             )}
           </Form.Item>
@@ -272,7 +285,10 @@ const QuestionEdit: React.FC = () => {
                 controls
                 style={{ width: 200, height: 200 }}
               >
-                <source src={videoLocation} type="video/mp4" />
+                <source
+                  src={GenerateUtils.genUrlImage(videoLocation)}
+                  type="video/mp4"
+                />
               </video>
             )}
           </Form.Item>
@@ -327,11 +343,15 @@ const QuestionEdit: React.FC = () => {
                             style={{ fontSize: 20 }}
                             disabled={fields?.length === 1}
                             className="dynamic-delete-button"
-                            onClick={() => {
-                              remove(field.name);
-                              mutationDeleteAnswer.mutate(
-                                lstAnswer[field.name].answerId,
-                              );
+                            onClick={async () => {
+                              try {
+                                await mutationDeleteAnswer.mutateAsync(
+                                  lstAnswer[field.name].id,
+                                );
+                                remove(field.name);
+                              } catch (error) {
+                                console.error("Error deleting answer:", error);
+                              }
                             }}
                           />
                         </div>
@@ -380,11 +400,15 @@ const QuestionEdit: React.FC = () => {
                         <MinusCircleOutlined
                           style={{ fontSize: 20 }}
                           className="dynamic-delete-button"
-                          onClick={() => {
-                            remove(field.name);
-                            mutationDeleteAnswer.mutate(
-                              lstAnswer[field.name].answerId,
-                            );
+                          onClick={async () => {
+                            try {
+                              await mutationDeleteAnswer.mutateAsync(
+                                lstAnswer[field.name].id,
+                              );
+                              remove(field.name);
+                            } catch (error) {
+                              console.error("Error deleting answer:", error);
+                            }
                           }}
                         />
                       </div>

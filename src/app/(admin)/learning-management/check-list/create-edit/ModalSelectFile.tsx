@@ -1,6 +1,7 @@
 import BasicDrawer from "@/components/UI/draw/BasicDraw";
 import { isImage } from "@/components/common/constants";
 import Learning from "@/model/Learning";
+import { GenerateUtils } from "@/utils/generate";
 import { useQuery } from "@tanstack/react-query";
 import {
   Collapse,
@@ -52,11 +53,11 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
     queryKey: ["getAllTopics"],
     queryFn: async () => {
       const res = await Learning.getAllTopics();
-      return res?.data?.map((item: { topicId: any; content: any }) => ({
-        id: item.topicId,
-        value: item.topicId,
-        label: item.content,
-        text: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        id: item.id,
+        value: item.id,
+        label: item.name,
+        text: item.name,
       }));
     },
   });
@@ -86,8 +87,10 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
     queryKey: ["listVideo", topicId],
     queryFn: async () => {
       if (topicId) {
-        const res = await Learning.getVocabularyTopic(topicId);
-        return res.data;
+        const res = await Learning.getAllVocabulary({
+          topicId,
+        });
+        return res.content;
       }
     },
     enabled: !!topicId && openChooseVideo,
@@ -101,12 +104,12 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
       content: string;
     }[] = [];
 
-    if (item.vocabularyImageResList) {
-      item.vocabularyImageResList.forEach((image: any) => {
+    if (item.imagesPath) {
+      item.imagesPath.forEach((image: any) => {
         locationsImage.push({
           type: 1,
-          location: image.imageLocation,
-          content: image.vocabularyContent,
+          location: image,
+          content: image,
         });
       });
     }
@@ -121,12 +124,12 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
       content: string;
     }[] = [];
 
-    if (item.vocabularyVideoResList) {
-      item.vocabularyVideoResList.forEach((video: any) => {
+    if (item.videosPath) {
+      item.videosPath.forEach((video: any) => {
         locationsVideo.push({
           type: 2,
-          location: video.videoLocation,
-          content: video.vocabularyContent,
+          location: video,
+          content: video,
         });
       });
     }
@@ -193,7 +196,7 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
                               </Tooltip>
                               <Image
                                 preview={false}
-                                src={item.location}
+                                src={GenerateUtils.genUrlImage(item.location)}
                                 alt=""
                                 style={{
                                   width: 200,
@@ -264,7 +267,10 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
                               </Tooltip>
 
                               <video controls>
-                                <source src={item.location} type="video/mp4" />
+                                <source
+                                  src={GenerateUtils.genUrlImage(item.location)}
+                                  type="video/mp4"
+                                />
                               </video>
                             </div>
                           )}

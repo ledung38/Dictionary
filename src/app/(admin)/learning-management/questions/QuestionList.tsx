@@ -30,6 +30,7 @@ import { renderAnswerValue } from "../check-list/create-edit/ModalChooseQuestion
 import { colors } from "@/assets/colors";
 import { ConfirmModal } from "@/components/UI/Modal/ConfirmModal";
 import { debounce } from "lodash";
+import { GenerateUtils } from "@/utils/generate";
 
 interface Answer {
   id: number;
@@ -44,12 +45,12 @@ const QuestionList = () => {
 
   // filter
   const [filterParams, setFilterParams] = useState<{
-    contentSearch: string;
+    content: string;
     page?: number;
     size?: number;
     classRoomId?: number;
   }>({
-    contentSearch: "",
+    content: "",
     page: 0,
     size: 10,
     classRoomId: 0,
@@ -95,7 +96,7 @@ const QuestionList = () => {
     queryKey: ["getQuestionTopic", filterParams],
     queryFn: async () => {
       const res = await Questions.getAllQuestion(filterParams);
-      return res.data;
+      return res.content;
     },
   });
 
@@ -118,9 +119,9 @@ const QuestionList = () => {
     queryKey: ["getListClass"],
     queryFn: async () => {
       const res = await Learning.getListClass();
-      return res?.data?.map((item: { classRoomId: any; content: any }) => ({
-        value: item.classRoomId,
-        label: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        value: item.id,
+        label: item.name,
       }));
     },
   });
@@ -132,9 +133,13 @@ const QuestionList = () => {
       message.success("Xoá câu hỏi thành công");
       refetch();
     },
+    onError: (error: any) => {
+      message.error(error?.data?.message);
+    },
   });
 
   const handleViewImage = (record: any) => {
+    console.log("record", record);
     setPreview({
       open: true,
       file: record?.imageLocation,
@@ -152,14 +157,15 @@ const QuestionList = () => {
     },
     {
       title: "Lớp",
-      dataIndex: "classRoomContent",
-      key: "classRoomContent",
+      dataIndex: "classroom",
+      key: "classroom",
+      render: (classroom: any) => classroom?.name,
     },
     {
       title: "Hình ảnh/Video",
-      dataIndex: "imageLocation",
-      key: "imageLocation",
-      render: (imageLocation: string, record: any) => (
+      dataIndex: "imagesPath",
+      key: "imagesPath",
+      render: (imagesPath: string, record: any) => (
         <div>
           <Button onClick={() => handleViewImage(record)}>Xem</Button>
         </div>
@@ -213,7 +219,7 @@ const QuestionList = () => {
     },
     {
       fixed: "right",
-      dataIndex: "questionId",
+      dataIndex: "id",
       width: "40px",
       align: "center",
       render: (value: string, record: any) => {
@@ -281,7 +287,7 @@ const QuestionList = () => {
   const handleSearch = debounce((e: any) => {
     setFilterParams((prevParams) => ({
       ...prevParams,
-      contentSearch: e.target.value,
+      content: e.target.value,
       page: 0,
     }));
   }, 600);
@@ -336,7 +342,7 @@ const QuestionList = () => {
       <CustomTable
         className="mt-4"
         rowSelection={rowSelection}
-        rowKey={(record: any) => record.questionId}
+        rowKey={(record: any) => record.id}
         columns={columns}
         dataSource={allQuestion}
         loading={isFetching}
@@ -359,7 +365,7 @@ const QuestionList = () => {
                 className={`flex transform items-center justify-center ${
                   expanded ? "rotate-90" : ""
                 } transition-all duration-300`}
-                onClick={() => toggleExpandRow(record.questionId)}
+                onClick={() => toggleExpandRow(record.id)}
               >
                 <CaretRightIcon />
               </div>
@@ -395,7 +401,7 @@ const QuestionList = () => {
                 key={preview.file}
                 preview={false}
                 className=""
-                src={preview.file}
+                src={GenerateUtils.genUrlImage(preview.file)}
                 alt="Ảnh chủ đề"
                 style={{ width: 400, height: 400, objectFit: "contain" }}
               />
@@ -415,7 +421,9 @@ const QuestionList = () => {
                       justifyContent: "center",
                     }}
                   >
-                    <source src={preview.fileVideo} />
+                    <source
+                      src={GenerateUtils.genUrlImage(preview.fileVideo)}
+                    />
                   </video>
                 </div>
               ) : (

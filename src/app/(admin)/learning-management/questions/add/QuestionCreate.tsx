@@ -26,6 +26,7 @@ import { useForm } from "antd/es/form/Form";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import QuestionModal from "../../check-list/create-edit/ModalSelectFile";
+import { GenerateUtils } from "@/utils/generate";
 
 interface Answer {
   content: string;
@@ -88,9 +89,9 @@ const QuestionCreate: React.FC = () => {
     queryKey: ["getListClass"],
     queryFn: async () => {
       const res = await Learning.getListClass();
-      return res?.data?.map((item: { classRoomId: any; content: any }) => ({
-        value: item.classRoomId,
-        label: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        value: item.id,
+        label: item.name,
       }));
     },
   });
@@ -267,7 +268,9 @@ const QuestionCreate: React.FC = () => {
                                         height: 200,
                                         objectFit: "contain",
                                       }}
-                                      src={lstQuestions?.questions[index]?.file}
+                                      src={GenerateUtils.genUrlImage(
+                                        lstQuestions?.questions[index]?.file,
+                                      )}
                                     />
                                   ) : (
                                     <video
@@ -275,9 +278,9 @@ const QuestionCreate: React.FC = () => {
                                       style={{ width: 200, height: 200 }}
                                     >
                                       <source
-                                        src={
-                                          lstQuestions?.questions[index]?.file
-                                        }
+                                        src={GenerateUtils.genUrlImage(
+                                          lstQuestions?.questions[index]?.file,
+                                        )}
                                         type="video/mp4"
                                       />
                                     </video>

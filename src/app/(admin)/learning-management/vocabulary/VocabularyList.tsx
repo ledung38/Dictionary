@@ -104,7 +104,6 @@ const VocabularyList = ({ isPrivate }: any) => {
     open: false,
     record: "",
   });
-  console.log("isPrivete", isPrivate);
 
   // Thêm từ vào chủ đề
   const [modalAddVocabularyTopic, setModalAddVocabularyTopic] = useState<{
