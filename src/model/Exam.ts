@@ -3,8 +3,12 @@ import { Base } from "./Base";
 
 class Exam extends Base {
   // Danh sách bài kiểm tra
-  getLstExam = async (body?: any) => {
-    return this.apiPost("/exams/all-exams", body);
+  getLstExam = async (params?: any) => {
+    const res = await this.apiGetWithoutPrefix(
+      `/exam/all?${params?.isPrivate !== undefined && `private=${params?.isPrivate}`}`,
+      params,
+    );
+    return res.data;
   };
 
   // Danh sách bài kiểm tra cho user
@@ -15,13 +19,13 @@ class Exam extends Base {
 
   // Chỉnh sửa bài kiểm tra
   editExams = async (body?: any) => {
-    const res = await this.apiPut(`/exams`, body);
+    const res = await this.apiPutWithoutPrefix(`/exam-auth/${body.id}`, body);
     return res.data;
   };
 
   // Thêm bài kiểm tra
   addExam = async (body?: any) => {
-    const res = await this.apiPost(`/exams`, body);
+    const res = await this.apiPostWithoutPrefix(`/exam-auth`, body);
     return res.data;
   };
 
@@ -33,7 +37,7 @@ class Exam extends Base {
 
   // Chi tiết bài kiểm tra
   detailExamsForUser = async (id: number) => {
-    const res = await this.apiGet(`/exams/${id}`);
+    const res = await this.apiGetWithoutPrefix(`/exam/${id}`);
     return res.data;
   };
 
@@ -56,7 +60,7 @@ class Exam extends Base {
   };
   // Xoá bài kiểm tra
   deleteExam = async (id: number) => {
-    const res = await this.apiDelete(`/exams/${id}`);
+    const res = await this.apiDeleteWithoutPrefix(`/exam-auth/${id}`);
     return res.data;
   };
 
@@ -67,4 +71,4 @@ class Exam extends Base {
   };
 }
 
-export default new Exam("learning-service");
+export default new Exam("");

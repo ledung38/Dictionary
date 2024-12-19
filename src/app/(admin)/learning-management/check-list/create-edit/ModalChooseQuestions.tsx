@@ -18,6 +18,7 @@ import React, { useEffect, useState } from "react";
 import { CustomTable } from "../ExamList";
 import { useQuery } from "@tanstack/react-query";
 import Questions from "@/model/Questions";
+import { GenerateUtils } from "@/utils/generate";
 
 interface Answer {
   id: number;
@@ -99,10 +100,13 @@ const ModalChooseQuestions: React.FC<ModalChooseQuestionsProps> = ({
 
   // Danh sách câu hỏi theo lớp
   const { data: lstQuestion, isFetching } = useQuery({
-    queryKey: ["getLstQuestionClass", classRoomId],
+    queryKey: ["getLstQuestionClass", classRoomId, searchValue],
     queryFn: async () => {
-      const res = await Questions.getAllQuestion({ classRoomId });
-      return res.data;
+      const res = await Questions.getAllQuestion({
+        classRoomId,
+        content: searchValue,
+      });
+      return res.content;
     },
     enabled: open && !!classRoomId,
   });
@@ -119,7 +123,7 @@ const ModalChooseQuestions: React.FC<ModalChooseQuestionsProps> = ({
     if (open && number && lstQuestion?.length && !questionIds.length) {
       const shuffled = [...lstQuestion].sort(() => 0.5 - Math.random());
       const selected = shuffled.slice(0, number);
-      setSelectedRowId(selected.map((q) => q.questionId));
+      setSelectedRowId(selected.map((q) => q.id));
       setSelectRecords(selected);
     }
   }, [open, number, lstQuestion, questionIds]);
@@ -272,7 +276,7 @@ const ModalChooseQuestions: React.FC<ModalChooseQuestionsProps> = ({
           <CustomTable
             className="mt-4"
             rowSelection={rowSelection}
-            rowKey={(record: any) => record.questionId}
+            rowKey={(record: any) => record.id}
             columns={columns}
             dataSource={questions || lstQuestion}
             pagination={false}
@@ -289,7 +293,7 @@ const ModalChooseQuestions: React.FC<ModalChooseQuestionsProps> = ({
                     className={`flex transform items-center justify-center ${
                       expanded ? "rotate-90" : ""
                     } transition-all duration-300`}
-                    onClick={() => toggleExpandRow(record.questionId)}
+                    onClick={() => toggleExpandRow(record.id)}
                   >
                     <CaretRightIcon />
                   </div>
@@ -326,7 +330,7 @@ const ModalChooseQuestions: React.FC<ModalChooseQuestionsProps> = ({
               <Image
                 preview={false}
                 className=""
-                src={preview.file}
+                src={GenerateUtils.genUrlImage(preview.file)}
                 alt="Ảnh chủ đề"
                 style={{ width: 400, height: 400, objectFit: "contain" }}
               />
@@ -344,7 +348,7 @@ const ModalChooseQuestions: React.FC<ModalChooseQuestionsProps> = ({
                   justifyContent: "center",
                 }}
               >
-                <source src={preview.fileVideo} />
+                <source src={GenerateUtils.genUrlImage(preview.fileVideo)} />
               </video>
             </div>
           )}

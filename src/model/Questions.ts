@@ -63,7 +63,9 @@ class Questions extends Base {
 
   // Dánh sách câu hỏi theo bài kiểm tra
   getLstQuestionExam = async (id?: any) => {
-    const res = await this.apiGet(`/questions/question-of-exam/${id}`);
+    const res = await this.apiGetWithoutPrefix(
+      `/question/question-of-exam/${id}`,
+    );
     return res.data;
   };
 

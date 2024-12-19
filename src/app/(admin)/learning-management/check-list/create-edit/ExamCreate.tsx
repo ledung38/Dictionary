@@ -7,7 +7,7 @@ import {
   validateRequireInput,
 } from "@/utils/validation/validtor";
 import { DeleteFilled } from "@ant-design/icons";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
   Collapse,
@@ -23,6 +23,8 @@ import type { UploadFile } from "antd/es/upload/interface";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import ModalChooseQuestions from "./ModalChooseQuestions";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 interface Answer {
   id: number;
@@ -49,13 +51,16 @@ const CreateAndEditExamPage: React.FC = () => {
   const searchParams = useSearchParams();
   const isPrivate = searchParams.get("isPrivate");
   const id = searchParams.get("id");
+  const user: User = useSelector((state: RootState) => state.admin);
+
   // list câu hỏi
   const lstQuestions = Form.useWatch("lstQuestions", form);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     form.setFieldValue(
       "questionIds",
-      lstQuestions?.map((item: any) => item.questionId),
+      lstQuestions?.map((item: any) => item.id),
     );
   }, [form, lstQuestions]);
 
@@ -71,11 +76,11 @@ const CreateAndEditExamPage: React.FC = () => {
     queryKey: ["getAllTopics", isPrivate],
     queryFn: async () => {
       const res = await Learning.getAllTopics({ isPrivate: isPrivate });
-      return res?.data?.map((item: { topicId: any; content: any }) => ({
-        id: item.topicId,
-        value: item.topicId,
-        label: item.content,
-        text: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        id: item.id,
+        value: item.id,
+        label: item.name,
+        text: item.name,
       }));
     },
     enabled: !!isPrivate,
@@ -87,15 +92,15 @@ const CreateAndEditExamPage: React.FC = () => {
     queryFn: async () => {
       const res = await Exam.detailExamsForUser(Number(id));
       form.setFieldsValue({
-        ...res?.data,
-        numQuestions: res.data?.numberOfQuestions,
+        ...res,
+        numQuestions: res.numberOfQuestions,
       });
       setOpenChooseQuestions({
         ...openChooseQuestions,
-        classRoomId: res?.data.classRoomId,
+        classRoomId: res.classRoomId,
       });
 
-      return res?.data;
+      return res;
     },
     enabled: !!id,
   });
@@ -105,9 +110,9 @@ const CreateAndEditExamPage: React.FC = () => {
     queryKey: ["getListClass"],
     queryFn: async () => {
       const res = await Learning.getListClass();
-      return res?.data?.map((item: { classRoomId: any; content: any }) => ({
-        value: item.classRoomId,
-        label: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        value: item.id,
+        label: item.name,
       }));
     },
     enabled: !!isPrivate,
@@ -133,14 +138,20 @@ const CreateAndEditExamPage: React.FC = () => {
 
   // Lấy câu hỏi theo bài kiểm tra
   const { data: limitQuestion, isFetching: isFetchingQExams } = useQuery({
-    queryKey: ["getLstQuestionExam"],
+    queryKey: ["getLstQuestionExamCreate"],
     queryFn: async () => {
-      const res = await Questions.getLstQuestionExam(detailExam.examId);
-      form.setFieldValue("lstQuestions", res?.data);
-      return res?.data;
+      const res = await Questions.getLstQuestionExam(detailExam.id);
+      form.setFieldValue("lstQuestions", res);
+      return res;
     },
-    enabled: detailExam && !!detailExam?.examId,
+    enabled: detailExam && !!detailExam?.id,
   });
+
+  useEffect(() => {
+    if (!detailExam?.id) {
+      queryClient.removeQueries({ queryKey: ["getLstQuestionExamCreate"] });
+    }
+  }, [detailExam, queryClient]);
 
   // Thêm bài kiểm tra
   const addExam = useMutation({
@@ -155,8 +166,8 @@ const CreateAndEditExamPage: React.FC = () => {
           : "/learning-management/check-list/public",
       );
     },
-    onError: () => {
-      message.error("Thêm bài kiểm tra thất bại");
+    onError: (error: any) => {
+      message.error(error.data.message);
     },
   });
 
@@ -172,14 +183,15 @@ const CreateAndEditExamPage: React.FC = () => {
           : "/learning-management/check-list/public",
       );
     },
-    onError: () => {
-      message.error("Chỉnh sửa bài kiểm tra thất bại");
+    onError: (error: any) => {
+      message.error(error?.data?.message);
     },
   });
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+  console.log("limitQuestion?.length", limitQuestion);
 
   return (
     <Spin
@@ -198,10 +210,12 @@ const CreateAndEditExamPage: React.FC = () => {
               questionIds: value.questionIds,
               classRoomId: value.classRoomId,
               private: isPrivate,
+              numberOfQuestions: value.numQuestions,
+              creatorId: user.id,
             };
 
             const reqEdit = {
-              examId: value.examId,
+              id: value.id,
               name: value.name,
               questionIds: value.questionIds,
               private: isPrivate,
@@ -233,7 +247,7 @@ const CreateAndEditExamPage: React.FC = () => {
               }}
             />
           </Form.Item>
-          <Form.Item name="examId" hidden />
+          <Form.Item name="id" hidden />
           <Form.Item
             label="Tên bài kiểm tra"
             name="name"
@@ -269,6 +283,7 @@ const CreateAndEditExamPage: React.FC = () => {
           <Button
             type="primary"
             disabled={
+              limitQuestion?.length > 0 &&
               form.getFieldValue("numQuestions") > limitQuestion?.length
             }
             className=""
@@ -309,8 +324,7 @@ const CreateAndEditExamPage: React.FC = () => {
                         form.setFieldValue(
                           "lstQuestions",
                           lstQuestions?.filter(
-                            (question: { questionId: any }) =>
-                              question?.questionId !== e?.questionId,
+                            (question: { id: any }) => question?.id !== e?.id,
                           ),
                         );
                       }}

@@ -31,11 +31,11 @@ const ExamListPage: React.FC = () => {
   // xử lý khi hover vào row
   const [filterParams, setFilterParams] = useState<{
     classRoomId: number;
-    nameSearch: string;
+    name: string;
     isPrivate?: string;
   }>({
     classRoomId: 0,
-    nameSearch: "",
+    name: "",
     isPrivate: "false",
   });
 
@@ -53,7 +53,7 @@ const ExamListPage: React.FC = () => {
     queryKey: ["getLstExamUser"],
     queryFn: async () => {
       const res = await Exam.getLstExamUser();
-      return res?.data?.content;
+      return res?.content;
     },
   });
 
@@ -86,11 +86,11 @@ const ExamListPage: React.FC = () => {
     queryKey: ["getAllTopics"],
     queryFn: async () => {
       const res = await Learning.getAllTopics();
-      return res?.data?.map((item: { topicId: any; content: any }) => ({
-        id: item.topicId,
-        value: item.topicId,
-        label: item.content,
-        text: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        id: item.id,
+        value: item.id,
+        label: item.name,
+        text: item.name,
       }));
     },
   });
@@ -100,9 +100,9 @@ const ExamListPage: React.FC = () => {
     queryKey: ["getListClass"],
     queryFn: async () => {
       const res = await Learning.getListClass();
-      return res?.data?.map((item: { classRoomId: any; content: any }) => ({
-        value: item.classRoomId,
-        label: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        value: item.id,
+        label: item.name,
       }));
     },
   });
@@ -127,19 +127,18 @@ const ExamListPage: React.FC = () => {
       key: "numberOfQuestions",
     },
     {
-      dataIndex: "examId",
+      dataIndex: "id",
       width: 120,
       align: "center",
       render: (value: number, record: any) => {
         return (
           <>
-            {allExamUser?.filter(
-              (item: { examId: number }) => item.examId === value,
-            )?.length ? null : (
+            {allExamUser?.filter((item: { id: number }) => item.id === value)
+              ?.length ? null : (
               <Button
                 onClick={() => {
                   mutationAddUser.mutate({
-                    examIds: [value],
+                    ids: [value],
                     userId: user.userId,
                   });
                 }}

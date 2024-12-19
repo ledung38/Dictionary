@@ -50,12 +50,12 @@ const ExamListPage = ({ isPrivate }: any) => {
   // xử lý khi hover vào row
   const [filterParams, setFilterParams] = useState<{
     classRoomId: number | string;
-    nameSearch: string;
+    name: string;
     isPrivate: string;
   }>({
     classRoomId: 0,
-    nameSearch: "",
-    isPrivate: `${isPrivate}`,
+    name: "",
+    isPrivate,
   });
 
   // API lấy danh sách  bài kiểm tra
@@ -72,11 +72,11 @@ const ExamListPage = ({ isPrivate }: any) => {
     queryKey: ["getAllTopics", isPrivate],
     queryFn: async () => {
       const res = await Learning.getAllTopics({ isPrivate: isPrivate });
-      return res?.data?.map((item: { topicId: any; content: any }) => ({
-        id: item.topicId,
-        value: item.topicId,
-        label: item.content,
-        text: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        id: item.id,
+        value: item.id,
+        label: item.name,
+        text: item.name,
       }));
     },
   });
@@ -86,9 +86,9 @@ const ExamListPage = ({ isPrivate }: any) => {
     queryKey: ["getListClass"],
     queryFn: async () => {
       const res = await Learning.getListClass();
-      return res?.data?.map((item: { classRoomId: any; content: any }) => ({
-        value: item.classRoomId,
-        label: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        value: item.id,
+        label: item.name,
       }));
     },
   });
@@ -100,8 +100,8 @@ const ExamListPage = ({ isPrivate }: any) => {
       message.success("Xoá bài kiểm tra thành công");
       refetch();
     },
-    onError: () => {
-      message.error("Xoá bài kiểm tra thất bại");
+    onError: (error: any) => {
+      message.error(error?.data?.message);
     },
   });
 
@@ -125,7 +125,7 @@ const ExamListPage = ({ isPrivate }: any) => {
     },
     {
       fixed: "right",
-      dataIndex: "examId",
+      dataIndex: "id",
       width: "40px",
       align: "center",
       render: (value: number, record: any) => {
@@ -176,7 +176,13 @@ const ExamListPage = ({ isPrivate }: any) => {
     <div className="container mx-auto py-4">
       <h1 className="mb-4 text-2xl font-bold">Danh sách bài kiểm tra</h1>
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Input className="w-full" placeholder="Tên bài kiểm tra" />
+        <Input
+          className="w-full"
+          placeholder="Tên bài kiểm tra"
+          onChange={(e) =>
+            setFilterParams({ ...filterParams, name: e.target.value })
+          }
+        />
         <Select
           className="w-full"
           allowClear
@@ -210,7 +216,7 @@ const ExamListPage = ({ isPrivate }: any) => {
         scroll={{ x: 1100, y: 440 }}
         loading={isFetching}
         pagination={{ ...pagination, showSizeChanger: false }}
-        rowKey="examId"
+        rowKey="id"
       />
     </div>
   );
