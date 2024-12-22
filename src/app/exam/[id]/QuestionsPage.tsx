@@ -2,6 +2,7 @@
 import Breadcrumb from "@/components/UI/Breadcrumbs/Breadcrumb";
 import Exam from "@/model/Exam";
 import Questions from "@/model/Questions";
+import { GenerateUtils } from "@/utils/generate";
 import { FrownOutlined, MehOutlined, SmileOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -16,6 +17,7 @@ import {
   Spin,
   message,
 } from "antd";
+import _ from "lodash";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
@@ -50,7 +52,7 @@ const ExamDetailPage: React.FC = () => {
     queryKey: ["detailExamsForUser", id],
     queryFn: async () => {
       const res = await Exam.detailExamsForUser(Number(id));
-      return res?.data;
+      return res;
     },
     enabled: !!id,
   });
@@ -61,11 +63,9 @@ const ExamDetailPage: React.FC = () => {
     queryFn: async () => {
       const responsive = await Questions.getLstQuestionExam(id);
       form.setFieldsValue({
-        questionId: responsive?.data?.map(
-          (question: any) => question.questionId,
-        ),
+        questionId: responsive?.content?.map((question: any) => question.id),
       });
-      return responsive?.data;
+      return responsive?.content;
     },
     enabled: !!id,
   });
@@ -76,7 +76,7 @@ const ExamDetailPage: React.FC = () => {
     queryFn: async () => {
       const responsive = await Exam.getDetailSaveExam(id);
 
-      return responsive?.data;
+      return responsive;
     },
     enabled: !!id,
   });
@@ -86,21 +86,21 @@ const ExamDetailPage: React.FC = () => {
       const initialValues = lstQuestions.reduce(
         (acc: any, question: any, index: number) => {
           const savedAnswer = detailExamSave.find(
-            (item: any) => item.questionId === question.questionId,
+            (item: any) => item.questionId === question.id,
           );
           if (savedAnswer) {
             const selectedAnswers = savedAnswer.selectedAnswers;
+
             acc.answerList = acc.answerList || [];
             acc.answerList[index] = {
-              answerId:
+              id:
                 selectedAnswers && question?.questionType === "ONE_ANSWER"
                   ? selectedAnswers[0]
                   : selectedAnswers,
             };
             acc.answer = acc.answer || [];
             acc.answer[index] = question.answerResList?.some(
-              (ans: any) =>
-                selectedAnswers?.includes(ans.answerId) && ans.correct,
+              (ans: any) => selectedAnswers?.includes(ans.id) && ans.correct,
             );
           }
           return acc;
@@ -112,32 +112,30 @@ const ExamDetailPage: React.FC = () => {
     }
   }, [detailExamSave, lstQuestions]);
 
-  // Chấm điểm
-  const markExam = useMutation({
-    mutationFn: Exam.markExam,
-    onSuccess: () => {},
-  });
-
   // Lưu đáp án
   const saveExam = useMutation({
     mutationFn: Exam.saveExam,
     onSuccess: () => {
       message.success("Chấm điểm thành công");
+      setIsResultModalVisible(true);
+    },
+    onError: (error: any) => {
+      console.log(error.data?.message);
     },
   });
 
-  const submitExam = (values: any) => {
+  const submitExam = (values: any, isConfirm = false) => {
     // Data truyền cho api
     const req = lstQuestions.map(
-      (question: { questionId: any }, index: string | number) => {
+      (question: { id: any }, index: string | number) => {
         const correctAnswer = values?.answerList[index];
         const selectedAnswers =
-          typeof correctAnswer.answerId === "number"
-            ? [correctAnswer?.answerId]
-            : correctAnswer?.answerId;
+          typeof correctAnswer.id === "number"
+            ? [correctAnswer?.id]
+            : correctAnswer?.id;
 
         return {
-          questionId: question.questionId,
+          questionId: question.id,
           examId: Number(id),
           selectedAnswers,
         };
@@ -149,28 +147,30 @@ const ExamDetailPage: React.FC = () => {
         !values.answer || values.answer[index] === undefined,
     );
 
-    if (unansweredQuestions.length > 0) {
+    if (unansweredQuestions.length > 0 && !isConfirm) {
       setIsConfirmModalVisible(true);
     } else {
-      calculateScore(values);
-    }
-    saveExam.mutate(req);
-  };
+      try {
+        const score = values.answer?.filter((item: any) => item)?.length;
+        const _score = (score / lstQuestions?.length) * 10;
+        const body = {
+          score: _score,
+          saveExams: req,
+        };
+        saveExam.mutate(body);
 
-  const calculateScore = (values: any) => {
-    const calculatedScore = values.answer?.filter((item: any) => item)?.length;
-    markExam.mutate({
-      examId: Number(id),
-      score: (calculatedScore / lstQuestions?.length) * 10,
-    });
-    setScore((calculatedScore / lstQuestions?.length) * 10);
-    setIsResultModalVisible(true);
+        setScore(_score);
+      } catch (error) {
+        console.log(error);
+      }
+    }
   };
 
   const handleConfirmSubmit = () => {
     form.validateFields().then((values) => {
-      calculateScore(values);
+      submitExam(values, true);
     });
+
     setIsConfirmModalVisible(false);
   };
 
@@ -240,14 +240,17 @@ const ExamDetailPage: React.FC = () => {
                       {q.imageLocation && (
                         <Image
                           style={{ height: "256px" }}
-                          src={q.imageLocation}
+                          src={GenerateUtils.genUrlImage(q.imageLocation)}
                           alt="question media"
                           className="h-64 w-full object-cover"
                         />
                       )}
                       {q.videoLocation && (
                         <video controls className="h-64 w-full object-cover">
-                          <source src={q.videoLocation} type="video/mp4" />
+                          <source
+                            src={GenerateUtils.genUrlImage(q.videoLocation)}
+                            type="video/mp4"
+                          />
                           Your browser does not support the video tag.
                         </video>
                       )}
@@ -256,16 +259,14 @@ const ExamDetailPage: React.FC = () => {
                   <Form.Item name={["answer", index]} hidden />
                   <Form.Item name={["questionId", index]} hidden />
 
-                  <Form.Item name={["answerList", index, "answerId"]}>
+                  <Form.Item name={["answerList", index, "id"]}>
                     {q.answerResList?.filter(
                       (item: { correct: boolean }) => item.correct,
                     )?.length > 1 ? (
                       <Checkbox.Group
                         onChange={(value) => {
                           const correct = q.answerResList
-                            ?.filter((item: any) =>
-                              value.includes(item.answerId),
-                            )
+                            ?.filter((item: any) => value.includes(item.id))
                             ?.every(
                               (item: { correct: boolean }) => item.correct,
                             );
@@ -273,10 +274,7 @@ const ExamDetailPage: React.FC = () => {
                         }}
                       >
                         {q.answerResList.map((answer: any) => (
-                          <Checkbox
-                            key={answer.answerId}
-                            value={answer.answerId}
-                          >
+                          <Checkbox key={answer.id} value={answer.id}>
                             {answer.content}
                           </Checkbox>
                         ))}
@@ -285,8 +283,8 @@ const ExamDetailPage: React.FC = () => {
                       <Radio.Group>
                         {q.answerResList.map((answer: any) => (
                           <Radio
-                            key={answer.answerId}
-                            value={answer.answerId}
+                            key={answer.id}
+                            value={answer.id}
                             onChange={(e) => {
                               if (e.target.checked) {
                                 form.setFieldValue(
@@ -414,14 +412,17 @@ const ExamDetailPage: React.FC = () => {
                   {q.imageLocation && (
                     <Image
                       style={{ height: "256px" }}
-                      src={q.imageLocation}
+                      src={GenerateUtils.genUrlImage(q.imageLocation)}
                       alt="question media"
                       className="h-64 w-full object-cover"
                     />
                   )}
                   {q.videoLocation && (
                     <video controls className="h-64 w-full object-cover">
-                      <source src={q.videoLocation} type="video/mp4" />
+                      <source
+                        src={GenerateUtils.genUrlImage(q.videoLocation)}
+                        type="video/mp4"
+                      />
                       Your browser does not support the video tag.
                     </video>
                   )}
@@ -435,11 +436,11 @@ const ExamDetailPage: React.FC = () => {
                   disabled
                   value={q.answerResList
                     ?.filter((item: { correct: boolean }) => item.correct)
-                    ?.map((item: { answerId: any }) => item.answerId)}
+                    ?.map((item: { id: any }) => item.id)}
                   options={q.answerResList?.map(
-                    (e: { content: any; answerId: any }) => ({
+                    (e: { content: any; id: any }) => ({
                       label: e.content,
-                      value: e.answerId,
+                      value: e.id,
                     }),
                   )}
                 />
@@ -449,11 +450,11 @@ const ExamDetailPage: React.FC = () => {
                   value={
                     q.answerResList?.find(
                       (item: { correct: boolean }) => item.correct,
-                    )?.answerId
+                    )?.id
                   }
                 >
                   {q.answerResList.map((answer: any) => (
-                    <Radio value={answer.answerId} key={answer.answerId}>
+                    <Radio value={answer.id} key={answer.id}>
                       {answer.content}
                     </Radio>
                   ))}

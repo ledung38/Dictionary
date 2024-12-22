@@ -4,15 +4,9 @@ import { usePage } from "@/hooks/usePage";
 import Exam from "@/model/Exam";
 import Learning from "@/model/Learning";
 import { RootState } from "@/store";
-import {
-  DeleteFilled,
-  DeleteOutlined,
-  EditFilled,
-  MenuFoldOutlined,
-  MoreOutlined,
-} from "@ant-design/icons";
+import { DeleteOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Button, Dropdown, Input, Select, Table, message } from "antd";
+import { Button, Input, Select, Table, message } from "antd";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
@@ -64,8 +58,8 @@ const ExamListPage: React.FC = () => {
       message.success("Thêm bài kiểm tra thành công");
       refetch();
     },
-    onError: () => {
-      message.error("Thêm bài kiểm tra thất bại");
+    onError: (error: any) => {
+      message.error(error?.data?.message);
     },
   });
 
@@ -76,8 +70,8 @@ const ExamListPage: React.FC = () => {
       message.success("Xoá bài kiểm tra thành công");
       refetch();
     },
-    onError: () => {
-      message.error("Xoá bài kiểm tra thất bại");
+    onError: (error: any) => {
+      message.error(error?.data?.message);
     },
   });
 
@@ -133,14 +127,21 @@ const ExamListPage: React.FC = () => {
       render: (value: number, record: any) => {
         return (
           <>
-            {allExamUser?.filter((item: { id: number }) => item.id === value)
-              ?.length ? null : (
+            {allExamUser?.filter(
+              (item: { exam: any }) => item.exam.id === value,
+            )?.length ? null : (
               <Button
-                onClick={() => {
-                  mutationAddUser.mutate({
-                    ids: [value],
-                    userId: user.userId,
-                  });
+                onClick={async () => {
+                  try {
+                    mutationAddUser.mutate({
+                      ids: [value],
+                      userId: user.userId,
+                    });
+
+                    router.push(`/exam/${value}`);
+                  } catch (error) {
+                    console.error(error);
+                  }
                 }}
               >
                 Làm bài
@@ -157,14 +158,16 @@ const ExamListPage: React.FC = () => {
       title: "Tên bài kiểm tra",
       dataIndex: "name",
       key: "name",
-      render: (text: string, record: any) => (
-        <div
-          className="hover:cursor-pointer"
-          onClick={() => router.push(`/exam/${record?.examId}`)}
-        >
-          <div className="text-blue-500">{text}</div>
-        </div>
-      ),
+      render: (text: string, record: any) => {
+        return (
+          <div
+            className="hover:cursor-pointer"
+            onClick={() => router.push(`/exam/${record?.exam?.id}`)}
+          >
+            <div className="text-blue-500">{record.exam?.name}</div>
+          </div>
+        );
+      },
       width: 150,
     },
     {
@@ -172,6 +175,9 @@ const ExamListPage: React.FC = () => {
       dataIndex: "numberOfQuestions",
       key: "numberOfQuestions",
       width: 100,
+      render: (value: number, record: any) => (
+        <div className="font-bold">{record.exam?.numberOfQuestions}</div>
+      ),
     },
     {
       title: "Điểm số (Thang điểm 10 )",
@@ -182,8 +188,8 @@ const ExamListPage: React.FC = () => {
     },
     {
       title: "Trạng thái",
-      dataIndex: "finish",
-      key: "finish",
+      dataIndex: "isFinished",
+      key: "isFinished",
       render: (status: boolean) =>
         status ? (
           <div className="caption-12-medium flex w-[120px] items-center justify-center rounded bg-green-100 px-4 py-2 text-green-700">
@@ -197,14 +203,16 @@ const ExamListPage: React.FC = () => {
       width: 100,
     },
     {
-      dataIndex: "examId",
+      dataIndex: "id",
       width: 40,
       align: "center",
       render: (value: number, record: any) => (
         <div className="flex items-center gap-4">
-          {record?.finish ? (
+          {record?.isFinished ? (
             <Button
-              onClick={() => router.push(`/exam/${record?.examId}/?redo=true`)}
+              onClick={() =>
+                router.push(`/exam/${record?.exam?.id}/?redo=true`)
+              }
             >
               Làm lại
             </Button>
@@ -214,7 +222,7 @@ const ExamListPage: React.FC = () => {
     },
     {
       fixed: "right",
-      dataIndex: "examId",
+      dataIndex: "id",
       width: 40,
       align: "center",
       render: (value: number, record: any) => (
@@ -236,7 +244,13 @@ const ExamListPage: React.FC = () => {
     <div className="container mx-auto py-4">
       <h1 className="mb-4 text-2xl font-bold">Danh sách bài kiểm tra</h1>
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Input className="w-full" placeholder="Tên bài kiểm tra" />
+        <Input
+          className="w-full"
+          placeholder="Tên bài kiểm tra"
+          onChange={(e) =>
+            setFilterParams({ ...filterParams, name: e.target.value })
+          }
+        />
         <Select
           className="w-full"
           allowClear
@@ -284,7 +298,7 @@ const ExamListPage: React.FC = () => {
         dataSource={allExamUser}
         columns={columnsExamUser as any}
         scroll={{ x: 1100, y: 440 }}
-        rowKey="examId"
+        rowKey="id"
       />
     </div>
   );
