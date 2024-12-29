@@ -334,7 +334,24 @@ const QuestionCreate: React.FC = () => {
                   {(fields, { add, remove }) => (
                     <>
                       {question.type === "ONE_ANSWER" ? (
-                        <Radio.Group className="w-full" defaultValue={0}>
+                        <Radio.Group
+                          className="w-full"
+                          defaultValue={0}
+                          onChange={(e) => {
+                            fields.forEach((field, idx) => {
+                              form.setFieldValue(
+                                [
+                                  "questions",
+                                  index,
+                                  "answerReqs",
+                                  idx,
+                                  "correct",
+                                ],
+                                idx === e.target.value,
+                              );
+                            });
+                          }}
+                        >
                           {fields.map((field, answerIndex) => (
                             <div
                               key={field.key}

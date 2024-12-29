@@ -19,11 +19,22 @@ import moment from "moment";
 import { AvatarUpload } from "../UI/Upload/AvatarUpload";
 import User from "@/model/User";
 import { login } from "@/store/slices/adminSlice";
+import { useState } from "react";
+import { EditAddressSchool } from "./EditAddressSchool";
 
 const Profile = () => {
   const router = useRouter();
   const user: User = useSelector((state: RootState) => state.admin);
   const dispatch = useDispatch();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const handleOpenModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+  };
 
   return (
     <div className="mx-auto max-w-242.5">
@@ -50,7 +61,7 @@ const Profile = () => {
           />
           <div
             className="xsm:bottom-4 xsm:right-4 absolute bottom-1 right-1 z-10"
-            onClick={() => router.push(`/profile/${user.userId}`)}
+            onClick={() => router.push(`/profile/${user.id}`)}
           >
             <label
               htmlFor="cover"
@@ -85,7 +96,12 @@ const Profile = () => {
             <p className="font-medium">
               {user?.address || "Chưa có thông tin"}
             </p>
-
+            <button
+              className="ml-2 rounded bg-green-500 px-2 py-1 font-bold text-white hover:bg-green-700"
+              onClick={handleOpenModal}
+            >
+              Thông tin trường học
+            </button>
             <div className="mx-auto mt-4 max-w-[460px]">
               <h4 className="font-semibold text-black dark:text-white">
                 Thông tin cơ bản
@@ -148,6 +164,7 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      <EditAddressSchool visible={isModalVisible} onClose={handleCloseModal} />
     </div>
   );
 };
