@@ -228,7 +228,6 @@ const VocabularyList = ({ isPrivate }: any) => {
     },
   });
 
-  console.log("value", form.getFieldsValue());
   // Column
   const columns = [
     {
@@ -302,14 +301,14 @@ const VocabularyList = ({ isPrivate }: any) => {
       key: "videosPath",
       align: "center",
       render: (videoLocation: any, record: { videosPath: string | any[] }) => {
-        if (record.videosPath?.length && record.videosPath[0].videoLocation) {
+        if (record.videosPath?.length && record.videosPath[0]) {
           return (
             <EyeOutlined
               style={{ fontSize: "1.5rem" }}
               onClick={() =>
                 setModalPreview({
                   open: true,
-                  file: record.videosPath[0].videoLocation,
+                  file: record.videosPath[0],
                 })
               }
             />

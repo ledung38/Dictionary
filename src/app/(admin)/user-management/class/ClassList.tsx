@@ -24,7 +24,7 @@ import {
 } from "antd";
 import { useForm } from "antd/es/form/Form";
 import React, { useCallback, useState } from "react";
-import { CustomTable } from "../check-list/ExamList";
+import { CustomTable } from "../../learning-management/check-list/ExamList";
 import { debounce } from "lodash";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -454,7 +454,7 @@ const ClassList: React.FC = () => {
                   placeholder="Nhập tên giáo viên"
                   value={
                     form.getFieldValue("teacherId") &&
-                    `${form.getFieldValue("teacherName")} - ${form.getFieldValue("teacherId")}`
+                    `${form.getFieldValue("teacherName")}`
                   }
                   onChange={(e) => handleOnchangeTeacher(e.target.value)}
                 />

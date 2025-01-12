@@ -87,6 +87,19 @@ class User extends Base {
     const res = await this.apiPut(`-auth/authorization/${id}`, { id: id });
     return res.data;
   };
+
+  studentList = async (param?: any) => {
+    const res = await this.apiGetWithoutPrefix(`/user/student-list`, param);
+    return res.data;
+  };
+
+  viewVocabulary = async (body?: any) => {
+    const res = await this.apiPostWithoutPrefix(
+      `/user-auth/vocabulary/view/${body.id}`,
+      body,
+    );
+    return res.data;
+  };
 }
 
 export default new User("user");

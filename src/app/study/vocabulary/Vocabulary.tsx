@@ -1,14 +1,31 @@
 "use client";
 import { RootState } from "@/store";
 import { useQuery } from "@tanstack/react-query";
-import { Spin, message, Table, Select, Input, Image, Modal, Button, Carousel } from "antd";
+import {
+  Spin,
+  message,
+  Table,
+  Select,
+  Input,
+  Image,
+  Modal,
+  Button,
+  Carousel,
+} from "antd";
 import { FC, useState, useCallback, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { debounce } from "lodash";
-import { EyeOutlined, LeftOutlined, RightOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  EyeOutlined,
+  LeftOutlined,
+  RightOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 import Learning from "@/model/Learning";
 import styled from "styled-components";
 import ButtonPrimary from "@/components/UI/Button/ButtonPrimary";
+import { GenerateUtils } from "@/utils/generate";
+import User from "@/model/User";
 
 const CustomSlider = styled(Carousel)`
   &.ant-carousel {
@@ -38,7 +55,7 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
     topicId?: number;
     isPrivate?: boolean;
     vocabularyType?: string;
-    contentSearch?: string;
+    content?: string;
   }>({});
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,24 +87,22 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
   const [videoCurrent, setVideoCurrent] = useState<any>();
 
   useEffect(() => {
-    if (vocabularyModal.open) {
+    if (
+      vocabularyModal.open &&
+      vocabularyModal.vocabulary?.videosPath?.length
+    ) {
       setAutoplay(true);
-      setVideoCurrent(
-        vocabularyModal.vocabulary?.vocabularyVideoResList[0]?.videoLocation,
-      );
+      setVideoCurrent(vocabularyModal.vocabulary?.videosPath[0]);
       setCurrentVideoIndex(0);
     }
   }, [vocabularyModal.open, vocabularyModal.vocabulary]);
 
   const handleNextVideo = () => {
     const nextIndex = currentVideoIndex + 1;
-    if (nextIndex < vocabularyModal.vocabulary?.vocabularyVideoResList?.length) {
+    if (nextIndex < vocabularyModal.vocabulary?.videosPath?.length) {
       setCurrentVideoIndex(nextIndex);
       setAutoplay(true);
-      setVideoCurrent(
-        vocabularyModal.vocabulary?.vocabularyVideoResList[nextIndex]
-          .videoLocation,
-      );
+      setVideoCurrent(vocabularyModal.vocabulary?.videosPath[nextIndex]);
     }
   };
 
@@ -96,15 +111,12 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
     if (previousIndex >= 0) {
       setCurrentVideoIndex(previousIndex);
       setAutoplay(true);
-      setVideoCurrent(
-        vocabularyModal.vocabulary?.vocabularyVideoResList[previousIndex]
-          .videoLocation,
-      );
+      setVideoCurrent(vocabularyModal.vocabulary?.videosPath[previousIndex]);
     }
   };
 
   const handleNext = () => {
-    if (fileIndex < vocabularyModal.vocabulary.vocabularyImageResList.length - 1) {
+    if (fileIndex < vocabularyModal.vocabulary.imagesPath.length - 1) {
       setFileIndex(fileIndex + 1);
     }
   };
@@ -134,52 +146,49 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
     queryKey: ["getAllTopics"],
     queryFn: async () => {
       const res = await Learning.getAllTopics();
-      return res?.data?.map((item: { topicId: any; content: any }) => ({
-        id: item.topicId,
-        value: item.topicId,
-        label: item.content,
-        text: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        id: item.id,
+        value: item.id,
+        label: item.name,
+        text: item.name,
       }));
     },
   });
 
   // API lấy danh sách từ khi tìm kiếm
-  const { data: allVocabulary, isFetching, refetch } = useQuery({
+  const {
+    data: allVocabulary,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: ["searchVocabulary", filterParams],
     queryFn: async () => {
       const res = await Learning.getAllVocabulary({
         ...filterParams,
-        isPrivate: user.role === "USER" && "false",
+        ...(user.role === "USER" ? { isPrivate: false } : {}),
       });
-      if (!res?.data?.length) {
+      if (!res?.content?.length) {
         message.warning("Không có kết quả tìm kiếm");
         return [];
       }
       // Sắp xếp priamry lên đầu
-      res?.data?.forEach(
-        (item: {
-          vocabularyImageResList: any[];
-          vocabularyVideoResList: any[];
-        }) => {
-          item.vocabularyImageResList?.sort(
-            (a: { primary: any }, b: { primary: any }) => {
-              // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
-              return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
-            },
-          );
-          item.vocabularyVideoResList?.sort(
-            (a: { primary: any }, b: { primary: any }) => {
-              // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
-              return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
-            },
-          );
+      res?.content?.forEach(
+        (item: { imagesPath: any[]; videosPath: any[] }) => {
+          item.imagesPath?.sort((a: { primary: any }, b: { primary: any }) => {
+            // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
+            return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
+          });
+          item.videosPath?.sort((a: { primary: any }, b: { primary: any }) => {
+            // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
+            return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
+          });
         },
       );
       // Sort the vocabulary data alphabetically by content
-      res.data.sort((a: { content: string }, b: { content: string }) => {
+      res.content.sort((a: { content: string }, b: { content: string }) => {
         return a.content.localeCompare(b.content);
       });
-      return res.data;
+      return res.content;
     },
   });
 
@@ -196,7 +205,14 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
             color: "#1890ff",
             maxWidth: "200px",
           }}
-          onClick={() => setVocabularyModal({ open: true, vocabulary: record })}
+          onClick={() => {
+            try {
+              user?.id && User.viewVocabulary({ id: record.id });
+              setVocabularyModal({ open: true, vocabulary: record });
+            } catch (error: any) {
+              message.error(error?.data?.message);
+            }
+          }}
         >
           {content}
         </span>
@@ -206,10 +222,10 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
     },
     {
       title: "Chủ đề",
-      dataIndex: "topicContent",
-      key: "topicContent",
-      render: (content: string) => (
-        <span style={{ fontWeight: 500 }}>{content}</span>
+      dataIndex: "topic",
+      key: "topic",
+      render: (content: any) => (
+        <span style={{ fontWeight: 500 }}>{content?.name}</span>
       ),
       ellipsis: true,
       width: 100,
@@ -223,10 +239,10 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
           {content === "WORD"
             ? "Từ"
             : content === "SENTENCE"
-            ? "Câu"
-            : content === "PARAGRAPH"
-            ? "Đoạn"
-            : content}
+              ? "Câu"
+              : content === "PARAGRAPH"
+                ? "Đoạn"
+                : content}
         </span>
       ),
       ellipsis: true,
@@ -240,21 +256,18 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
       render: (
         imageLocation: any,
         record: {
-          vocabularyImageResList: string | any[];
+          imagesPath: string | any[];
           content: string | undefined;
         },
       ) => {
-        if (
-          record.vocabularyImageResList?.length &&
-          record.vocabularyImageResList[0].imageLocation
-        ) {
+        if (record.imagesPath?.length && record.imagesPath[0]) {
           return (
             <EyeOutlined
               style={{ fontSize: "1.5rem" }}
               onClick={() =>
                 setModalPreview({
                   open: true,
-                  file: record.vocabularyImageResList[0].imageLocation,
+                  file: record.imagesPath[0],
                   type: "image",
                 })
               }
@@ -268,24 +281,18 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
     },
     {
       title: "Video minh hoạ",
-      dataIndex: "videoLocation",
-      key: "videoLocation",
+      dataIndex: "videosPath",
+      key: "videosPath",
       align: "center",
-      render: (
-        videoLocation: any,
-        record: { vocabularyVideoResList: string | any[] },
-      ) => {
-        if (
-          record.vocabularyVideoResList?.length &&
-          record.vocabularyVideoResList[0].videoLocation
-        ) {
+      render: (videoLocation: any, record: { videosPath: string | any[] }) => {
+        if (record.videosPath?.length && record.videosPath[0]) {
           return (
             <EyeOutlined
               style={{ fontSize: "1.5rem" }}
               onClick={() =>
                 setModalPreview({
                   open: true,
-                  file: record.vocabularyVideoResList[0].videoLocation,
+                  file: record.videosPath[0],
                   type: "video",
                 })
               }
@@ -301,7 +308,7 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
 
   const handleSearch = useCallback(
     debounce((searchText: string) => {
-      setFilterParams({ ...filterParams, contentSearch: searchText });
+      setFilterParams({ ...filterParams, content: searchText });
     }, 300),
     [filterParams],
   );
@@ -311,18 +318,22 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
   return (
     <Spin spinning={isLoading}>
       <h1 className="mb-4 text-2xl font-bold">Danh sách từ điển học liệu</h1>
-      <div className="flex w-full gap-4 mb-4">
+      <div className="mb-4 flex w-full gap-4">
         <Select
           placeholder="Chọn chủ đề"
           style={{ width: 200 }}
           options={allTopics}
           value={filterParams.topicId}
-          onChange={(value) => setFilterParams({ ...filterParams, topicId: value })}
+          onChange={(value) =>
+            setFilterParams({ ...filterParams, topicId: value })
+          }
         />
         <Select
           placeholder="Loại từ vựng"
           style={{ width: 200 }}
-          onChange={(value) => setFilterParams({ ...filterParams, vocabularyType: value })}
+          onChange={(value) =>
+            setFilterParams({ ...filterParams, vocabularyType: value })
+          }
         >
           <Select.Option value="WORD">Từ</Select.Option>
           <Select.Option value="SENTENCE">Câu</Select.Option>
@@ -331,19 +342,19 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
         <Input
           placeholder="Nhập từ vựng"
           style={{ width: 400 }}
-          value={filterParams?.contentSearch}
+          value={filterParams?.content}
           onChange={(e) => {
-            setFilterParams({
-              ...filterParams,
-              contentSearch: e.target.value,
-            });
+            // setFilterParams({
+            //   ...filterParams,
+            //   name: e.target.value,
+            // });
             handleSearch(e.target.value);
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               setFilterParams({
                 ...filterParams,
-                contentSearch: e.currentTarget.value,
+                content: e.currentTarget.value,
               });
               handleSearch(e.currentTarget.value);
             }
@@ -368,13 +379,21 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
       <Modal
         visible={modalPreview.open}
         footer={null}
-        onCancel={() => setModalPreview({ open: false, file: "", type: "image" })}
+        onCancel={() =>
+          setModalPreview({ open: false, file: "", type: "image" })
+        }
       >
         {modalPreview.type === "image" ? (
-          <Image width="100%" src={modalPreview.file} />
+          <Image
+            width="100%"
+            src={GenerateUtils.genUrlImage(modalPreview.file)}
+          />
         ) : (
           <video width="100%" controls>
-            <source src={modalPreview.file} type="video/mp4" />
+            <source
+              src={GenerateUtils.genUrlImage(modalPreview.file)}
+              type="video/mp4"
+            />
             Your browser does not support the video tag.
           </video>
         )}
@@ -387,14 +406,16 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
         title={
           <>
             {vocabularyModal.vocabulary &&
-            vocabularyModal.vocabulary.vocabularyType === TYPE_VOCABULARY.WORD ? (
+            vocabularyModal.vocabulary.vocabularyType ===
+              TYPE_VOCABULARY.WORD ? (
               <div className="line-clamp-1 text-[32px] font-bold">
                 {vocabularyModal.vocabulary?.content}
               </div>
             ) : (
               <div>
                 {vocabularyModal.vocabulary &&
-                vocabularyModal.vocabulary.vocabularyType === TYPE_VOCABULARY.SENTENCE ? (
+                vocabularyModal.vocabulary.vocabularyType ===
+                  TYPE_VOCABULARY.SENTENCE ? (
                   <div className="line-clamp-1 text-[32px] font-bold">
                     Học tập theo câu văn
                   </div>
@@ -419,17 +440,14 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
                 className="flex w-full items-center justify-center"
                 dots={false}
               >
-                {vocabularyModal.vocabulary?.vocabularyImageResList?.map(
-                  (
-                    item: { imageLocation: string | undefined },
-                    index: React.Key | null | undefined,
-                  ) => (
+                {vocabularyModal.vocabulary?.imagesPath?.map(
+                  (item: string, index: React.Key | null | undefined) => (
                     <div key={index}>
-                      {item.imageLocation ? (
+                      {item ? (
                         <div className="text-center">
                           <Image
                             preview={false}
-                            src={item.imageLocation}
+                            src={GenerateUtils.genUrlImage(item)}
                             alt="imageLocation"
                             className="flex max-h-[400px] w-[400px] items-center justify-center object-scale-down"
                           />
@@ -439,7 +457,8 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
                                 className="line-clamp-[10] w-[420px] overflow-y-auto text-left text-[18px]"
                                 style={{
                                   display:
-                                    vocabularyModal.vocabulary.vocabularyType !== TYPE_VOCABULARY.WORD
+                                    vocabularyModal.vocabulary
+                                      .vocabularyType !== TYPE_VOCABULARY.WORD
                                       ? "block"
                                       : "none",
                                 }}
@@ -474,7 +493,10 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
                     style={{ width: "100%", height: 550 }}
                     onEnded={() => setAutoplay(false)}
                   >
-                    <source src={videoCurrent} type="video/mp4" />
+                    <source
+                      src={GenerateUtils.genUrlImage(videoCurrent)}
+                      type="video/mp4"
+                    />
                   </video>
                 ) : (
                   <div className="text-center text-xl">
@@ -490,7 +512,7 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
             <Button
               style={{
                 display:
-                  vocabularyModal.vocabulary?.vocabularyImageResList?.length < 2
+                  vocabularyModal.vocabulary?.imagesPath?.length < 2
                     ? "none"
                     : "block",
               }}
@@ -500,7 +522,7 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
             <Button
               style={{
                 display:
-                  vocabularyModal.vocabulary?.vocabularyImageResList?.length < 2
+                  vocabularyModal.vocabulary?.imagesPath?.length < 2
                     ? "none"
                     : "block",
               }}
@@ -518,7 +540,7 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
               style={{
                 display:
                   currentVideoIndex ===
-                  vocabularyModal.vocabulary?.vocabularyVideoResList?.length - 1
+                  vocabularyModal.vocabulary?.videosPath?.length - 1
                     ? "none"
                     : "block",
               }}

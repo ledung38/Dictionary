@@ -1,4 +1,4 @@
-import { DotIcon, RequestIcon } from "@/assets/icons";
+import { DotIcon, RequestIcon, StudyIcon } from "@/assets/icons";
 import { AdminIcon } from "@/assets/icons/AdminIcon";
 import { MobileOutlined } from "@ant-design/icons";
 
@@ -9,22 +9,22 @@ export const AdminSystem = (admin: any) => {
           key: "/learning-management",
           label: "Quản lý học liệu",
           path: "/learning-management",
-          icon: <AdminIcon color="white" size={20} />,
+          icon: <StudyIcon color="white" size={20} />,
           children: [
-            {
-              key: "/learning-management/class",
-              label: "Lớp học",
-              path: "/learning-management/class",
-              hidden: false,
-              icon: <DotIcon color="white" size={20} />,
-            },
-            {
-              key: "/learning-management/student",
-              label: "Học sinh",
-              path: "/learning-management/student",
-              hidden: false,
-              icon: <DotIcon color="white" size={20} />,
-            },
+            // {
+            //   key: "/learning-management/class",
+            //   label: "Lớp học",
+            //   path: "/learning-management/class",
+            //   hidden: false,
+            //   icon: <DotIcon color="white" size={20} />,
+            // },
+            // {
+            //   key: "/learning-management/student",
+            //   label: "Học sinh",
+            //   path: "/learning-management/student",
+            //   hidden: false,
+            //   icon: <DotIcon color="white" size={20} />,
+            // },
             {
               key: "/learning-management/topics",
               label: "Chủ đề ",
@@ -110,6 +110,36 @@ export const AdminSystem = (admin: any) => {
             },
           ],
           hidden: false,
+        },
+        {
+          key: "/user-management",
+          label: "Quản lý người dùng",
+          path: "/user-management",
+          icon: <AdminIcon color="white" size={20} />,
+          children: [
+            {
+              key: "/user-management/class",
+              label: "Lớp học",
+              path: "/user-management/class",
+              hidden: !(admin?.role === "ADMIN"),
+              icon: <DotIcon color="white" size={20} />,
+            },
+            {
+              key: "/user-management/teacher",
+              label: "Giáo viên",
+              path: "/user-management/teacher",
+              hidden: !(admin?.role === "ADMIN"),
+              icon: <DotIcon color="white" size={20} />,
+            },
+            {
+              key: "/user-management/student",
+              label: "Học sinh",
+              path: "/user-management/student",
+              hidden: !(admin?.role === "ADMIN"),
+              icon: <DotIcon color="white" size={20} />,
+            },
+          ],
+          hidden: !(admin?.role === "ADMIN"),
         },
         {
           key: "/approve-request",

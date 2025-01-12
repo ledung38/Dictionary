@@ -2,12 +2,22 @@
 import { default as Learning } from "@/model/Learning";
 import { RootState } from "@/store";
 import { useQuery } from "@tanstack/react-query";
-import { Input, Select, Spin, Table, Modal, Image, Button, message } from "antd";
+import {
+  Input,
+  Select,
+  Spin,
+  Table,
+  Modal,
+  Image,
+  Button,
+  message,
+} from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { FC, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Topic, User, Vocabulary } from "@/types";
 import { useSearchParams, useRouter } from "next/navigation"; // Import useSearchParams and useRouter
+import { GenerateUtils } from "@/utils/generate";
 
 export interface SectionHero2Props {
   className?: string;
@@ -19,7 +29,9 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
   const router = useRouter(); // Initialize useRouter
   const pageSize = 10;
   const [searchText, setSearchText] = useState<string>("");
-  const [selectedClass, setSelectedClass] = useState<string | undefined>(searchParams.get("className") || undefined); // Get initial class from query
+  const [selectedClass, setSelectedClass] = useState<string | undefined>(
+    searchParams.get("className") || undefined,
+  ); // Get initial class from query
   const [filteredTopics, setFilteredTopics] = useState<Topic[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [modalPreview, setModalPreview] = useState<{
@@ -44,11 +56,7 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
       const res = await Learning.getAllTopics({
         isPrivate: "false",
       });
-      return res.data as Topic[];
-    },
-    onError: (error) => {
-      message.error("Failed to fetch topics");
-      console.error("Error fetching topics:", error);
+      return res.content as Topic[];
     },
   });
 
@@ -57,11 +65,13 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
     queryKey: ["getListClass"],
     queryFn: async () => {
       const res = await Learning.getListClass();
-      return res.data.map((cls: { classRoomId: number; content: string; teacherName: string }) => ({
-        value: cls.content, // Use class name as value
-        label: cls.content,
-        teacherName: cls.teacherName, // Include teacherName
-      }));
+      return res.content.map(
+        (cls: { id: number; name: string; teacher: any }) => ({
+          value: cls.name, // Use class name as value
+          label: cls.name,
+          teacherName: cls.teacher.name, // Include teacherName
+        }),
+      );
     },
     onError: (error) => {
       message.error("Failed to fetch classes");
@@ -72,7 +82,9 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
   useEffect(() => {
     if (allTopics && allClasses) {
       let filtered = allTopics.map((topic) => {
-        const classInfo = allClasses.find((cls) => cls.value === topic.classRoomContent);
+        const classInfo = allClasses.find(
+          (cls) => cls.value === topic.classRoomContent,
+        );
         return {
           ...topic,
           teacherName: classInfo ? classInfo.teacherName : "",
@@ -81,14 +93,18 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
 
       if (searchText) {
         filtered = filtered.filter((topic) =>
-          topic.content.toLowerCase().includes(searchText.toLowerCase())
+          topic.name.toLowerCase().includes(searchText.toLowerCase()),
         );
       }
       if (selectedClass) {
-        filtered = filtered.filter((topic) => topic.classRoomContent === selectedClass);
+        filtered = filtered.filter(
+          (topic) => topic?.classroom?.name === selectedClass,
+        );
       }
       setFilteredTopics(
-        filtered.sort((a, b) => (a.content || "").localeCompare(b.content || ""))
+        filtered.sort((a, b) =>
+          (a.content || "").localeCompare(b.content || ""),
+        ),
       );
     }
   }, [searchText, selectedClass, allTopics, allClasses]);
@@ -105,21 +121,22 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
       title: "Lớp",
       dataIndex: "classRoomContent",
       key: "classRoomContent",
-      render: (value: string) => <div className="text-lg">{value}</div>,
+      render: (value: string, record: any) => (
+        <div className="text-lg">{record?.classroom?.name}</div>
+      ),
     },
     {
       title: "Tên chủ đề",
-      dataIndex: "content",
-      key: "content",
+      dataIndex: "name",
+      key: "name",
       render: (value: string, record: Topic) => (
         <div
-          className="text-lg cursor-pointer text-blue-500"
-          onClick={() => setVocabularyModal({ open: true, topicId: record.topicId })} // Open vocabulary modal
+          className="cursor-pointer text-lg text-blue-500"
+          onClick={() => setVocabularyModal({ open: true, topicId: record.id })} // Open vocabulary modal
         >
           {value}
         </div>
       ),
-
     },
     {
       title: "Minh họa",
@@ -129,7 +146,7 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
         <>
           {text ? (
             <EyeOutlined
-              style={{ fontSize: "1.5rem", alignSelf: "center"}}
+              style={{ fontSize: "1.5rem", alignSelf: "center" }}
               onClick={() =>
                 setModalPreview({
                   open: true,
@@ -148,7 +165,9 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
       title: "Tên giáo viên",
       dataIndex: "teacherName",
       key: "teacherName",
-      render: (value: string) => <div className="text-lg">{value}</div>,
+      render: (value: string, record: Topic) => (
+        <div className="text-lg">{record?.creator?.name}</div>
+      ),
     },
   ];
 
@@ -160,8 +179,10 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
     queryKey: ["getVocabularyByTopic", vocabularyModal.topicId],
     queryFn: async () => {
       if (vocabularyModal.topicId === null) return [];
-      const res = await Learning.getVocabularyByTopic(vocabularyModal.topicId);
-      return res.data as Vocabulary[];
+      const res = await Learning.getAllVocabulary({
+        topicId: vocabularyModal.topicId,
+      });
+      return res.content as Vocabulary[];
     },
     enabled: vocabularyModal.open,
     onError: (error) => {
@@ -194,8 +215,8 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
       title: "Chủ đề",
       dataIndex: "topicContent",
       key: "topicContent",
-      render: (content: string) => (
-        <span style={{ fontWeight: 500 }}>{content}</span>
+      render: (content: string, record: any) => (
+        <span style={{ fontWeight: 500 }}>{record?.topic?.name}</span>
       ),
       ellipsis: true,
       width: 100,
@@ -209,10 +230,10 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
           {content === "WORD"
             ? "Từ"
             : content === "SENTENCE"
-            ? "Câu"
-            : content === "PARAGRAPH"
-            ? "Đoạn"
-            : content}
+              ? "Câu"
+              : content === "PARAGRAPH"
+                ? "Đoạn"
+                : content}
         </span>
       ),
       ellipsis: true,
@@ -226,21 +247,18 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
       render: (
         imageLocation: any,
         record: {
-          vocabularyImageResList: string | any[];
+          imagesPath: string | any[];
           content: string | undefined;
         },
       ) => {
-        if (
-          record.vocabularyImageResList?.length &&
-          record.vocabularyImageResList[0].imageLocation
-        ) {
+        if (record.imagesPath?.length && record.imagesPath[0]) {
           return (
             <EyeOutlined
               style={{ fontSize: "1.5rem" }}
               onClick={() =>
                 setModalPreview({
                   open: true,
-                  file: record.vocabularyImageResList[0].imageLocation,
+                  file: record.imagesPath[0],
                   type: "image",
                 })
               }
@@ -257,21 +275,15 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
       dataIndex: "videoLocation",
       key: "videoLocation",
       align: "center",
-      render: (
-        videoLocation: any,
-        record: { vocabularyVideoResList: string | any[] },
-      ) => {
-        if (
-          record.vocabularyVideoResList?.length &&
-          record.vocabularyVideoResList[0].videoLocation
-        ) {
+      render: (videoLocation: any, record: { videosPath: string | any[] }) => {
+        if (record.videosPath?.length && record.videosPath[0]) {
           return (
             <EyeOutlined
               style={{ fontSize: "1.5rem" }}
               onClick={() =>
                 setModalPreview({
                   open: true,
-                  file: record.vocabularyVideoResList[0].videoLocation,
+                  file: record.videosPath[0],
                   type: "video",
                 })
               }
@@ -323,7 +335,10 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
         footer={null}
         onCancel={() => setModalPreview({ open: false, file: "" })}
       >
-        <Image width="100%" src={modalPreview.file} />
+        <Image
+          width="100%"
+          src={GenerateUtils.genUrlImage(modalPreview.file)}
+        />
       </Modal>
 
       <Modal

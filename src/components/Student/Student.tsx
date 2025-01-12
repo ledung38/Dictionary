@@ -6,10 +6,14 @@ import { Input, Table, message } from "antd";
 import { FC, useCallback, useState } from "react";
 import { useSelector } from "react-redux";
 import { debounce } from "lodash";
+import User from "@/model/User";
 
 interface Student {
-  studentName: string;
-  classRoomName: string;
+  name: string;
+  classroom: any;
+  classRoomId: number;
+  studentProfile: any;
+  classStudents: any;
 }
 
 const Students: FC = () => {
@@ -29,33 +33,31 @@ const Students: FC = () => {
   const { isFetching, refetch } = useQuery({
     queryKey: ["getListStudents"],
     queryFn: async () => {
-      const res = await Learning.getListStudents();
-      if (!res.data?.length) {
-        message.warning("Không có học sinh nào");
-        return [];
-      }
-      const sortedData = res.data.sort((a: Student, b: Student) =>
-        a.studentName.localeCompare(b.studentName)
-      );
-      setLstStudents(sortedData);
-      setFilteredLstStudents(sortedData);
-      return sortedData as Student[];
+      const res = await User.getAllAccount({
+        roleCode: "STUDENT",
+        name: searchText,
+      });
+      setLstStudents(res.content);
+      setFilteredLstStudents(res.content);
+      return res as Student[];
     },
   });
 
   const handleSearch = useCallback(
     debounce((searchText: string) => {
-      if (searchText) {
-        setFilteredLstStudents(
-          lstStudents.filter((item) =>
-            item.studentName.toLowerCase().includes(searchText.toLowerCase())
-          )
-        );
-      } else {
-        setFilteredLstStudents(lstStudents);
-      }
+      // if (searchText) {
+      //   setFilteredLstStudents(
+      //     lstStudents.filter((item) =>
+      //       item.studentName.toLowerCase().includes(searchText.toLowerCase()),
+      //     ),
+      //   );
+      // } else {
+      //   setFilteredLstStudents(lstStudents);
+      // }
+      refetch();
     }, 300),
-    [lstStudents]
+
+    [lstStudents],
   );
 
   const isLoading = isFetching;
@@ -97,16 +99,32 @@ const Students: FC = () => {
           },
           {
             title: "Tên học sinh",
-            dataIndex: "studentName",
-            key: "studentName",
+            dataIndex: "name",
+            key: "name",
             render: (value: string) => <div className="text-lg">{value}</div>,
             width: 200,
           },
           {
+            title: "Mã số học sinh",
+            dataIndex: "studentCode",
+            key: "studentCode",
+            render: (value: string, record: Student) => (
+              <div className="text-lg">
+                {record?.studentProfile?.studentCode}
+              </div>
+            ),
+            width: 200,
+          },
+          {
             title: "Lớp",
-            dataIndex: "classRoomName",
-            key: "classRoomName",
-            render: (value: string) => <div className="text-lg">{value}</div>,
+            dataIndex: "classroom",
+            key: "classroom",
+            render: (value: string, record: any) => (
+              <div className="text-lg">
+                {record?.classStudents?.length > 0 &&
+                  record?.classStudents[0]?.classroom.name}
+              </div>
+            ),
             width: 200,
           },
         ]}

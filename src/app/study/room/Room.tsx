@@ -7,17 +7,25 @@ import { FC, useCallback, useState } from "react";
 import { useSelector } from "react-redux";
 import { debounce } from "lodash";
 import { useRouter } from "next/navigation"; // Import useRouter
+import { ClassLevel } from "@/utils/enum";
 
 export interface SectionHero2Props {
   className?: string;
 }
 
 interface Class {
-  classRoomId?: number;
-  content: string;
-  teacherName: string;
-  imageLocation: string;
+  id: number;
+  name: string;
+  teacher: {
+    id: number;
+    name: string;
+  };
+  thumbnailPath: string;
   videoLocation?: string;
+  classLevel: ClassLevel;
+  teacherId: number;
+  teacherName: string;
+  classCode: string;
 }
 
 const Rooms: FC<SectionHero2Props> = ({ className = "" }) => {
@@ -36,15 +44,17 @@ const Rooms: FC<SectionHero2Props> = ({ className = "" }) => {
 
   // API lấy danh sách lớp
   const { isFetching, refetch } = useQuery({
-    queryKey: ["getListClass"],
+    queryKey: ["getListClass", searchText],
     queryFn: async () => {
-      const res = await Learning.getListClass();
-      if (!res.data?.length) {
+      const res = await Learning.getListClass({
+        name: searchText,
+      });
+      if (!res.content?.length) {
         message.warning("Không có lớp học nào");
         return [];
       }
-      const sortedData = res.data.sort((a: Class, b: Class) =>
-        a.content.localeCompare(b.content)
+      const sortedData = res.content.sort((a: Class, b: Class) =>
+        a.name.localeCompare(b.name),
       );
       setLstClass(sortedData);
       setFilteredLstClass(sortedData);
@@ -54,17 +64,18 @@ const Rooms: FC<SectionHero2Props> = ({ className = "" }) => {
 
   const handleSearch = useCallback(
     debounce((searchText: string) => {
-      if (searchText) {
-        setFilteredLstClass(
-          lstClass.filter((item) =>
-            item.content.toLowerCase().includes(searchText.toLowerCase())
-          )
-        );
-      } else {
-        setFilteredLstClass(lstClass);
-      }
+      // if (searchText) {
+      //   setFilteredLstClass(
+      //     lstClass.filter((item) =>
+      //       item.content.toLowerCase().includes(searchText.toLowerCase()),
+      //     ),
+      //   );
+      // } else {
+      //   setFilteredLstClass(lstClass);
+      // }
+      refetch();
     }, 300),
-    [lstClass]
+    [lstClass],
   );
 
   const isLoading = isFetching;
@@ -106,12 +117,16 @@ const Rooms: FC<SectionHero2Props> = ({ className = "" }) => {
           },
           {
             title: "Tên lớp học",
-            dataIndex: "content",
-            key: "content",
+            dataIndex: "name",
+            key: "name",
             render: (value: string, record: Class) => (
               <div
-                className="text-lg cursor-pointer text-blue-500"
-                onClick={() => router.push(`/study/topics?className=${encodeURIComponent(record.content)}`)} // Navigate to Topics page with class name
+                className="cursor-pointer text-lg text-blue-500"
+                onClick={() =>
+                  router.push(
+                    `/study/topics?className=${encodeURIComponent(record.name)}`,
+                  )
+                } // Navigate to Topics page with class name
               >
                 {value}
               </div>
@@ -120,15 +135,17 @@ const Rooms: FC<SectionHero2Props> = ({ className = "" }) => {
           },
           {
             title: "Tên giáo viên",
-            dataIndex: "teacherName",
-            key: "teacherName",
-            render: (value: string) => <div className="text-lg">{value}</div>,
+            dataIndex: "teacher",
+            key: "teacher",
+            render: (value: any) => (
+              <div className="text-lg">{value?.name}</div>
+            ),
             width: 300,
           },
           {
             title: "Mã lớp",
-            dataIndex: "classRoomId",
-            key: "classRoomId",
+            dataIndex: "classCode",
+            key: "classCode",
             render: (value: number) => <div className="text-lg">{value}</div>,
             width: 200,
           },

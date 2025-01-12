@@ -28,7 +28,6 @@ const DashboardApp: React.FC = () => {
     totalVocabularyTopic: 0,
   });
 
-
   const {
     topicsId,
     totalTopic,
@@ -42,7 +41,7 @@ const DashboardApp: React.FC = () => {
     queryKey: ["getListClassName"],
     queryFn: async () => {
       const res = await Learning.getListClass();
-      return res.data?.length;
+      return res.content?.length;
     },
   });
 
@@ -61,14 +60,14 @@ const DashboardApp: React.FC = () => {
       const responsive = await Learning.getAllVocabulary();
       setStateDashboard({
         ...stateDashboard,
-        totalTopic: res?.data?.length,
-        totalVocabulary: responsive?.data.length,
+        totalTopic: res?.content?.length,
+        totalVocabulary: responsive?.content.length,
       });
-      return res?.data?.map((item: { topicId: any; content: any }) => ({
-        id: item.topicId,
-        value: item.topicId,
-        label: item.content,
-        text: item.content,
+      return res?.content?.map((item: { id: any; name: any }) => ({
+        id: item.id,
+        value: item.id,
+        label: item.name,
+        text: item.name,
       }));
     },
   });
@@ -77,12 +76,14 @@ const DashboardApp: React.FC = () => {
   const { data: allVocabularyTopic } = useQuery({
     queryKey: ["getVocabularyTopic", topicsId],
     queryFn: async () => {
-      const res = await Learning.getVocabularyTopic(topicsId);
+      const res = await Learning.getAllVocabulary({
+        topicId: topicsId,
+      });
       setStateDashboard({
         ...stateDashboard,
-        totalVocabularyTopic: res?.data?.length,
+        totalVocabularyTopic: res?.content?.length,
       });
-      return res?.data;
+      return res?.content;
     },
     enabled: !!topicsId,
   });

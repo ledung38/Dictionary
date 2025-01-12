@@ -83,7 +83,7 @@ export const EditAddressSchool = ({
         onClose();
       })
       .catch((error: any) => {
-        message.error(error.message.data);
+        message.error(error.data.message);
       });
   };
 
@@ -103,7 +103,7 @@ export const EditAddressSchool = ({
         width={450}
       >
         <div className="mb-0 mt-2 flex flex-col items-center justify-center py-4">
-          <h1 className="mb-4 text-center">Địa chỉ trường học</h1>
+          <h1 className="mb-4 text-center font-bold">Địa chỉ trường học</h1>
           <Form form={form} layout="vertical" className="w-full">
             <Form.Item
               name="schoolName"
