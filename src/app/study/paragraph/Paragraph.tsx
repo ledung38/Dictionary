@@ -33,31 +33,28 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
         vocabularyType: "PARAGRAPH",
         isPrivate: user.role === "USER" && "false",
       });
-      if (!res?.data?.length) {
+      if (!res?.content?.length) {
         message.warning("Không có kết quả tìm kiếm");
-        return;
+        return [];
       }
       // Sắp xếp priamry lên đầu
-      res?.data?.forEach(
-        (item: {
-          vocabularyImageResList: any[];
-          vocabularyVideoResList: any[];
-        }) => {
-          item.vocabularyImageResList?.sort(
-            (a: { primary: any }, b: { primary: any }) => {
-              // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
-              return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
-            },
-          );
-          item.vocabularyVideoResList?.sort(
-            (a: { primary: any }, b: { primary: any }) => {
-              // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
-              return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
-            },
-          );
+      res?.content?.forEach(
+        (item: { imagesPath: any[]; videosPath: any[] }) => {
+          item.imagesPath?.sort((a: { primary: any }, b: { primary: any }) => {
+            // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
+            return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
+          });
+          item.videosPath?.sort((a: { primary: any }, b: { primary: any }) => {
+            // Sắp xếp sao cho phần tử có primary = true được đặt lên đầu
+            return a.primary === b.primary ? 0 : a.primary ? -1 : 1;
+          });
         },
       );
-      return (res.data as Vocabulary[]) || [];
+      // Sort the vocabulary data alphabetically by content
+      res.content.sort((a: { content: string }, b: { content: string }) => {
+        return a.content.localeCompare(b.content);
+      });
+      return res.content;
     },
   });
 

@@ -55,6 +55,7 @@ const CreateAndEditExamPage: React.FC = () => {
 
   // list câu hỏi
   const lstQuestions = Form.useWatch("lstQuestions", form);
+  console.log("lstQuestions", lstQuestions);
   const queryClient = useQueryClient();
 
   useEffect(() => {

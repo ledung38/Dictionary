@@ -33,8 +33,8 @@ const Login: React.FC = () => {
       message.success("Đăng nhập thành công");
       router.push("/");
     },
-    onError: (error: Error) => {
-      message.error("Sai tài khoản hoặc mật khẩu");
+    onError: (error: any) => {
+      message.error(error?.data?.message);
     },
   });
 

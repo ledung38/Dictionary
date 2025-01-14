@@ -72,7 +72,10 @@ export const EditAddressSchool = ({
       city: form.getFieldValue("city").split("_")[0],
       district: form.getFieldValue("district").split("_")[0],
       ward: form.getFieldValue("ward").split("_")[0],
+      address: `${form.getFieldValue("ward").split("_")[0]}, ${form.getFieldValue("district").split("_")[0]}, ${form.getFieldValue("city").split("_")[0]}`,
     });
+
+    form.getFieldValue;
     form
       .validateFields()
       .then(async (values) => {
@@ -160,6 +163,7 @@ export const EditAddressSchool = ({
                 }))}
               />
             </Form.Item>
+            <Form.Item name="address" style={{ display: "none" }}></Form.Item>
             <div className="flex justify-end">
               <button
                 className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
