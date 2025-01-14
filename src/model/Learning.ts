@@ -282,6 +282,11 @@ class Learning extends Base {
     );
     return res.data;
   };
+
+  getListLessons = async (params?: any) => {
+    const res = await this.apiGetWithoutPrefix(`/lessons`, params);
+    return res.data;
+  };
 }
 
 export default new Learning("");

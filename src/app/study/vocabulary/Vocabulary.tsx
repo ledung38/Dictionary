@@ -364,7 +364,7 @@ const Vocabulary: FC<SectionHero2Props> = ({ className = "" }) => {
       </div>
 
       <Table
-        columns={columns}
+        columns={columns as any}
         dataSource={allVocabulary}
         loading={isLoading}
         pagination={{

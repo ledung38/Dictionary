@@ -1,7 +1,7 @@
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { Metadata } from "next";
 import React from "react";
-import Lesson from "./Lesson";
+// import Lesson from "./Lesson";
 
 export const metadata: Metadata = {
   title: "Lesson - Dictionary",
@@ -25,7 +25,8 @@ export const metadata: Metadata = {
 const LearnVocabulary = () => {
   return (
     <DefaultLayout>
-      <Lesson />
+      Hello
+      {/* <Lesson /> */}
     </DefaultLayout>
   );
 };

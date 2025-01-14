@@ -2,7 +2,7 @@ import Chart from "@/components/Charts/page";
 import { Metadata } from "next";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import React from "react";
-import LessonList from "./LessonList";
+// import LessonList from "./LessonList";
 
 export const metadata: Metadata = {
   title: "Management-class  - Dictionary",
@@ -26,7 +26,8 @@ export const metadata: Metadata = {
 const ManagementClassPage: React.FC = () => {
   return (
     <DefaultLayout>
-      <LessonList />
+      Hello world
+      {/* <LessonList /> */}
     </DefaultLayout>
   );
 };

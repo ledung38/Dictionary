@@ -2,7 +2,7 @@ import Chart from "@/components/Charts/page";
 import { Metadata } from "next";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import React from "react";
-import ChatCard from "@/components/Chat/ChatCard";
+// import ChatCard from "@/components/Chat/ChatCard";
 
 export const metadata: Metadata = {
   title: "Chat- Dictionary",
@@ -26,7 +26,8 @@ export const metadata: Metadata = {
 const ChatPage: React.FC = () => {
   return (
     <DefaultLayout>
-      <ChatCard />
+      Hello world
+      {/* <ChatCard /> */}
     </DefaultLayout>
   );
 };

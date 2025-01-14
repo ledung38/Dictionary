@@ -1,5 +1,5 @@
 // pages/auth/login.tsx
-import IframeComponent from "@/components/Chat/IframeComponent";
+// import IframeComponent from "@/components/Chat/IframeComponent";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { Metadata } from "next";
 
@@ -25,7 +25,8 @@ export const metadata: Metadata = {
 export default function CollectDataPage() {
   return (
     <DefaultLayout>
-      <IframeComponent />
+      Hello world
+      {/* <IframeComponent /> */}
     </DefaultLayout>
   );
 }

@@ -37,9 +37,11 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
   const [modalPreview, setModalPreview] = useState<{
     open: boolean;
     file: string;
+    type?: string;
   }>({
     open: false,
     file: "",
+    type: "",
   });
   const [vocabularyModal, setVocabularyModal] = useState<{
     open: boolean;
@@ -73,17 +75,13 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
         }),
       );
     },
-    onError: (error) => {
-      message.error("Failed to fetch classes");
-      console.error("Error fetching classes:", error);
-    },
   });
 
   useEffect(() => {
     if (allTopics && allClasses) {
       let filtered = allTopics.map((topic) => {
         const classInfo = allClasses.find(
-          (cls) => cls.value === topic.classRoomContent,
+          (cls: any) => cls.value === topic.classRoomContent,
         );
         return {
           ...topic,
@@ -185,10 +183,6 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
       return res.content as Vocabulary[];
     },
     enabled: vocabularyModal.open,
-    onError: (error) => {
-      message.error("Failed to fetch vocabulary");
-      console.error("Error fetching vocabulary:", error);
-    },
   });
 
   const vocabularyColumns = [
@@ -349,7 +343,7 @@ const Topics: FC<SectionHero2Props> = ({ className = "" }) => {
       >
         <Spin spinning={isFetchingVocabulary}>
           <Table
-            columns={vocabularyColumns}
+            columns={vocabularyColumns as any}
             dataSource={vocabularyList}
             pagination={{
               pageSize: pageSize,
