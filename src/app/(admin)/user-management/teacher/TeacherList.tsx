@@ -128,7 +128,7 @@ const TeacherList: React.FC = () => {
       dataIndex: "name",
       key: "name",
       render: (value: string) => <div className="text-lg">{value}</div>,
-      width: 200,
+      width: 150,
     },
     {
       title: "Lớp",
@@ -137,14 +137,21 @@ const TeacherList: React.FC = () => {
       render: (value: string, record: any) => (
         <div className="text-lg">{record?.classroomTeacher?.name}</div>
       ),
-      width: 200,
+      width: 100,
     },
     {
       title: "Trường",
       dataIndex: "schoolName",
       key: "schoolName",
       render: (value: string) => <div className="text-lg">{value}</div>,
-      width: 350,
+      width: 200,
+    },
+    {
+      title: "Địa chỉ",
+      dataIndex: "address",
+      key: "address",
+      render: (value: string) => <div className="text-lg">{value}</div>,
+      width: 300,
     },
     // user?.role === "ADMIN"
     //   ? {
