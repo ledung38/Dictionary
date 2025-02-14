@@ -54,8 +54,7 @@ const CreateAndEditExamPage: React.FC = () => {
   const user: User = useSelector((state: RootState) => state.admin);
 
   // list câu hỏi
-  const lstQuestions = Form.useWatch("lstQuestions", form);
-  console.log("lstQuestions", lstQuestions);
+  const lstQuestions = Form.useWatch("answerResList", form);
   const queryClient = useQueryClient();
 
   useEffect(() => {
